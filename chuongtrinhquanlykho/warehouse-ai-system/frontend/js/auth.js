@@ -1,4 +1,4 @@
-﻿/* =====================================================
+/* =====================================================
    auth.js — Quản lý xác thực, phân quyền, user info
    ===================================================== */
 
@@ -35,7 +35,7 @@ const auth = {
     try {
       const token = localStorage.getItem('access_token');
       if (token) {
-        fetch('/api/auth/logout', {
+        fetch('http://localhost:5000/api/auth/logout', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });

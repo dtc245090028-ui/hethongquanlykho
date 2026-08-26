@@ -27,7 +27,7 @@ Lưu ý hiệu năng (Prompt.md mục 4):
 
 from flask import Blueprint, request, jsonify
 from sqlalchemy import func
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.extensions import db
 from app.models.goods import Goods
@@ -172,7 +172,7 @@ def inventory_value():
         })
 
     return jsonify({
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "filters": {
             "date_from": date_from_str,
             "date_to": date_to_str,
@@ -309,7 +309,7 @@ def inventory_turnover():
     )
 
     return jsonify({
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "filters": {
             "date_from": date_from_str,
             "date_to": date_to_str,
@@ -385,7 +385,7 @@ def top_goods():
         return jsonify({"error_code": "INVALID_DATE_FORMAT", "message": str(e)}), 400
 
     result = {
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "filters": {
             "date_from": date_from_str,
             "date_to": date_to_str,
@@ -592,7 +592,7 @@ def stocktake_diff():
         })
 
     return jsonify({
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "filters": {
             "date_from": date_from_str,
             "date_to": date_to_str,

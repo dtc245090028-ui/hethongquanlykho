@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Any
 
 from app.extensions import db
@@ -63,7 +63,7 @@ def create_purchase_order():
     if not supplier_id or not items_data:
         return jsonify({"error_code": "MISSING_FIELDS", "message": "Thiếu supplier_id hoặc items"}), 400
 
-    supplier = Supplier.query.get(supplier_id)
+    supplier = db.session.get(Supplier, supplier_id)
     if not supplier or supplier.status == 'inactive':
         return jsonify({"error_code": "INVALID_SUPPLIER", "message": "Nhà cung cấp không tồn tại hoặc đã ngừng hợp tác"}), 400
 
@@ -73,7 +73,7 @@ def create_purchase_order():
         if qty is None or float(qty) <= 0:
             return jsonify({"error_code": "INVALID_QUANTITY", "message": "Số lượng đặt hàng phải lớn hơn 0"}), 400
         
-        goods = Goods.query.get(item.get("goods_id"))
+        goods = db.session.get(Goods, item.get("goods_id"))
         if not goods or goods.status == 'inactive':
             return jsonify({"error_code": "INVALID_GOODS", "message": f"Hàng hóa ID {item.get('goods_id')} không tồn tại hoặc ngừng kinh doanh"}), 400
 
@@ -82,7 +82,7 @@ def create_purchase_order():
 
     # Parse order_date nếu có
     order_date_str = data.get("order_date")
-    order_date = datetime.utcnow()
+    order_date = datetime.now(timezone.utc).replace(tzinfo=None)
     if order_date_str:
         try:
             # Xử lý chuỗi ISO 8601 (có thể chứa Z)
@@ -117,7 +117,7 @@ def create_purchase_order():
 @roles_required("warehouse_keeper", "warehouse_manager")
 def get_purchase_order_details(id):
     """Lấy chi tiết PO"""
-    po = PurchaseOrder.query.get(id)
+    po = db.session.get(PurchaseOrder, id)
     if not po:
         return jsonify({"error_code": "PO_NOT_FOUND", "message": "Không tìm thấy Purchase Order"}), 404
 
@@ -136,7 +136,7 @@ def update_purchase_order_status(id):
     if new_status not in VALID_TRANSITIONS:
         return jsonify({"error_code": "INVALID_STATUS", "message": "Trạng thái không hợp lệ"}), 400
 
-    po = PurchaseOrder.query.get(id)
+    po = db.session.get(PurchaseOrder, id)
     if not po:
         return jsonify({"error_code": "PO_NOT_FOUND", "message": "Không tìm thấy Purchase Order"}), 404
 

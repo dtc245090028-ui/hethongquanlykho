@@ -25,7 +25,7 @@ Ràng buộc nghiệp vụ cốt lõi (Prompt.md mục 3.6, 6.1):
 """
 
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.extensions import db
 from app.models.supplier_invoice import SupplierInvoice, SupplierPayment
@@ -159,7 +159,7 @@ def create_supplier_invoice():
         }), 404
 
     # ---- Parse issue_date ----
-    issue_date = datetime.utcnow()
+    issue_date = datetime.now(timezone.utc).replace(tzinfo=None)
     issue_date_str = data.get("issue_date")
     if issue_date_str:
         try:
@@ -318,7 +318,7 @@ def create_supplier_payment():
         }), 400
 
     # ---- Parse payment_date ----
-    payment_date = datetime.utcnow()
+    payment_date = datetime.now(timezone.utc).replace(tzinfo=None)
     payment_date_str = data.get("payment_date")
     if payment_date_str:
         try:

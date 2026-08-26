@@ -65,7 +65,7 @@ def create_stocktake():
                     "message": "Số lượng thực tế không được nhỏ hơn 0"
                 }), 400
 
-            goods = Goods.query.get(goods_id)
+            goods = db.session.get(Goods, goods_id)
             if not goods:
                 db.session.rollback()
                 return jsonify({
@@ -106,7 +106,7 @@ def create_stocktake():
 @jwt_required()
 @roles_required("warehouse_keeper")
 def propose_stocktake(stocktake_id):
-    stocktake = Stocktake.query.get(stocktake_id)
+    stocktake = db.session.get(Stocktake, stocktake_id)
     if not stocktake:
         return jsonify({
             "error_code": "STOCKTAKE_NOT_FOUND",
@@ -166,7 +166,7 @@ def propose_stocktake(stocktake_id):
 @jwt_required()
 @roles_required("admin", "warehouse_manager")
 def approve_stocktake(stocktake_id):
-    stocktake = Stocktake.query.get(stocktake_id)
+    stocktake = db.session.get(Stocktake, stocktake_id)
     if not stocktake:
         return jsonify({
             "error_code": "STOCKTAKE_NOT_FOUND",
@@ -181,7 +181,7 @@ def approve_stocktake(stocktake_id):
 
     try:
         for item in stocktake.items:
-            goods = Goods.query.get(item.goods_id)
+            goods = db.session.get(Goods, item.goods_id)
             if goods:
                 goods.quantity_on_hand = item.actual_quantity
         

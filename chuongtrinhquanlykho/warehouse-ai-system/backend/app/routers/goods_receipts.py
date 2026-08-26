@@ -23,7 +23,7 @@ Ràng buộc nghiệp vụ cốt lõi (Prompt.md mục 3.3, 6.2):
 """
 
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.extensions import db
 from app.models.goods_receipt import GoodsReceipt, GoodsReceiptItem
@@ -176,7 +176,7 @@ def create_goods_receipt():
         }), 400
 
     # ---- Kiểm tra Supplier ----
-    supplier = Supplier.query.get(supplier_id)
+    supplier = db.session.get(Supplier, supplier_id)
     if not supplier:
         return jsonify({
             "error_code": "SUPPLIER_NOT_FOUND",
@@ -191,7 +191,7 @@ def create_goods_receipt():
     # ---- Kiểm tra PO (nếu có po_id) ----
     po_id = data.get("po_id")
     if po_id is not None:
-        po = PurchaseOrder.query.get(po_id)
+        po = db.session.get(PurchaseOrder, po_id)
         if not po:
             return jsonify({
                 "error_code": "PO_NOT_FOUND",
@@ -205,7 +205,7 @@ def create_goods_receipt():
 
     # ---- Parse received_date ----
     received_date_str = data.get("received_date")
-    received_date = datetime.utcnow()
+    received_date = datetime.now(timezone.utc).replace(tzinfo=None)
     if received_date_str:
         try:
             # Hỗ trợ cả "Z" (UTC) và "+HH:MM"
@@ -249,7 +249,7 @@ def create_goods_receipt():
 
         # Kiểm tra hàng hóa tồn tại và active
         if goods_id not in goods_map:
-            goods = Goods.query.get(goods_id)
+            goods = db.session.get(Goods, goods_id)
             if not goods:
                 return jsonify({
                     "error_code": "GOODS_NOT_FOUND",
@@ -325,7 +325,7 @@ def get_goods_receipt_detail(id):
     Response 200: to_dict(include_items=True)
     Response 404: RECEIPT_NOT_FOUND nếu không tồn tại
     """
-    receipt = GoodsReceipt.query.get(id)
+    receipt = db.session.get(GoodsReceipt, id)
     if not receipt:
         return jsonify({
             "error_code": "RECEIPT_NOT_FOUND",

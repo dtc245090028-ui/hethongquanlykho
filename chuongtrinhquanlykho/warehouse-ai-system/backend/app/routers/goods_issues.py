@@ -21,7 +21,7 @@ Ràng buộc nghiệp vụ cốt lõi (Prompt.md mục 3.3, 10):
 """
 
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.extensions import db
 from app.models.goods_issue import GoodsIssue, GoodsIssueItem
@@ -152,7 +152,7 @@ def create_goods_issue():
 
     # ---- Parse issued_date ----
     issued_date_str = data.get("issued_date")
-    issued_date = datetime.utcnow()
+    issued_date = datetime.now(timezone.utc).replace(tzinfo=None)
     if issued_date_str:
         try:
             # Hỗ trợ cả "Z" (UTC) và "+HH:MM"
@@ -192,7 +192,7 @@ def create_goods_issue():
 
         # Kiểm tra hàng hóa tồn tại và active
         if goods_id not in goods_map:
-            goods = Goods.query.get(goods_id)
+            goods = db.session.get(Goods, goods_id)
             if not goods:
                 return jsonify({
                     "error_code": "GOODS_NOT_FOUND",
@@ -301,7 +301,7 @@ def get_goods_issue_detail(id):
     Response 200: to_dict(include_items=True)
     Response 404: ISSUE_NOT_FOUND nếu không tồn tại
     """
-    issue = GoodsIssue.query.get(id)
+    issue = db.session.get(GoodsIssue, id)
     if not issue:
         return jsonify({
             "error_code": "ISSUE_NOT_FOUND",

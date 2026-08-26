@@ -10,7 +10,7 @@ Bám sát các ca trong Prompt.md mục 10:
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from app.main import create_app
 from app.extensions import db
 from app.models.user import User

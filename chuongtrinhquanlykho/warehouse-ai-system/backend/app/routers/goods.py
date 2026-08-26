@@ -92,7 +92,7 @@ def create_goods():
 @jwt_required()
 @roles_required("admin", "warehouse_manager", "warehouse_keeper")
 def get_goods_detail(goods_id):
-    goods = Goods.query.get(goods_id)
+    goods = db.session.get(Goods, goods_id)
     if not goods:
         return jsonify({"error_code": "NOT_FOUND", "message": "Không tìm thấy hàng hóa"}), 404
     return jsonify(goods.to_dict()), 200
@@ -101,7 +101,7 @@ def get_goods_detail(goods_id):
 @jwt_required()
 @roles_required("admin", "warehouse_manager")
 def update_goods(goods_id):
-    goods = Goods.query.get(goods_id)
+    goods = db.session.get(Goods, goods_id)
     if not goods:
         return jsonify({"error_code": "NOT_FOUND", "message": "Không tìm thấy hàng hóa"}), 404
 
