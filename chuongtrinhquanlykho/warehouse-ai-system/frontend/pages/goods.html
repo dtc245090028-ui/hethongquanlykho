@@ -98,7 +98,9 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label required">Danh mục (ID)</label>
-                <input type="number" id="f-category" class="form-control" placeholder="ID danh mục" min="1" required/>
+                <select id="f-category" class="form-select" required>
+                  <option value="">Đang tải danh mục...</option>
+                </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label required">Đơn vị tính</label>
@@ -106,7 +108,9 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label">NCC ưu tiên (ID)</label>
-                <input type="number" id="f-supplier" class="form-control" placeholder="ID nhà cung cấp"/>
+                <select id="f-supplier" class="form-select">
+                  <option value="">Đang tải nhà cung cấp...</option>
+                </select>
               </div>
               <div class="col-md-4">
                 <label class="form-label">Tồn tối thiểu (Min)</label>
@@ -176,6 +180,40 @@
     let isLowStockMode = false;
     const goodsModal  = new bootstrap.Modal(document.getElementById('goods-modal'));
     const detailModal = new bootstrap.Modal(document.getElementById('detail-modal'));
+
+    /* Nạp NCC đang hoạt động cho ô chọn NCC ưu tiên */
+    async function loadSupplierOptions(selectedId = '') {
+      const select = document.getElementById('f-supplier');
+      select.innerHTML = '<option value="">Đang tải nhà cung cấp...</option>';
+      try {
+        const result = await api.get('/suppliers', { page: 1, page_size: 100 });
+        const suppliers = result.data || [];
+        select.innerHTML = '<option value="">Không chọn NCC ưu tiên</option>' + suppliers.map(s => `
+          <option value="${s.id}">${s.id} — ${utils.escapeHtml(s.name)}${s.status === 'inactive' ? ' (Ngừng hoạt động)' : ''}</option>
+        `).join('');
+        select.value = selectedId ? String(selectedId) : '';
+      } catch (err) {
+        select.innerHTML = '<option value="">Không tải được danh sách NCC</option>';
+        throw err;
+      }
+    }
+
+    /* Nạp danh mục hiện có cho ô chọn danh mục */
+    async function loadCategoryOptions(selectedId = '') {
+      const select = document.getElementById('f-category');
+      select.innerHTML = '<option value="">Đang tải danh mục...</option>';
+      try {
+        const result = await api.get('/categories');
+        const categories = result.data || [];
+        select.innerHTML = '<option value="">Chọn danh mục</option>' + categories.map(category => `
+          <option value="${category.id}">${category.id} — ${utils.escapeHtml(category.name)}</option>
+        `).join('');
+        select.value = selectedId ? String(selectedId) : '';
+      } catch (err) {
+        select.innerHTML = '<option value="">Không tải được danh mục</option>';
+        throw err;
+      }
+    }
 
     /* Tải danh sách hàng hóa */
     async function loadGoods(page = 1) {
@@ -268,7 +306,7 @@
     }
 
     /* Mở modal thêm mới */
-    document.getElementById('btn-add')?.addEventListener('click', () => {
+    document.getElementById('btn-add')?.addEventListener('click', async () => {
       document.getElementById('goods-modal-title').textContent = 'Thêm hàng hóa mới';
       document.getElementById('goods-form').reset();
       document.getElementById('goods-id').value = '';
@@ -276,6 +314,12 @@
       document.getElementById('f-price').value = '0';
       document.getElementById('form-error').classList.add('d-none');
       goodsModal.show();
+      try {
+        await Promise.all([loadCategoryOptions(), loadSupplierOptions()]);
+      } catch (err) {
+        document.getElementById('form-error').textContent = 'Không thể tải danh sách nhà cung cấp: ' + err.message;
+        document.getElementById('form-error').classList.remove('d-none');
+      }
     });
 
     /* Mở modal sửa */
@@ -285,12 +329,14 @@
       goodsModal.show();
       try {
         const g = await api.get(`/goods/${id}`);
+        await Promise.all([
+          loadCategoryOptions(g.category_id),
+          loadSupplierOptions(g.preferred_supplier_id),
+        ]);
         document.getElementById('goods-id').value  = g.id;
         document.getElementById('f-sku').value      = g.sku || '';
         document.getElementById('f-name').value     = g.name || '';
-        document.getElementById('f-category').value = g.category_id || '';
         document.getElementById('f-unit').value     = g.unit || '';
-        document.getElementById('f-supplier').value = g.preferred_supplier_id || '';
         document.getElementById('f-min').value      = g.min_stock ?? 0;
         document.getElementById('f-max').value      = g.max_stock ?? '';
         document.getElementById('f-price').value    = g.selling_price ?? 0;

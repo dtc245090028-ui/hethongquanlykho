@@ -8,6 +8,7 @@ from app.models.supplier import Supplier
 from app.models.goods import Goods
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
+from sqlalchemy import case
 
 bp = Blueprint("purchase_orders", __name__, url_prefix="/api/purchase-orders")
 
@@ -22,7 +23,7 @@ VALID_TRANSITIONS = {
 
 @bp.route("", methods=["GET"])
 @jwt_required()
-@roles_required("warehouse_keeper", "warehouse_manager")
+@roles_required("admin", "warehouse_keeper", "warehouse_manager")
 def get_purchase_orders():
     """Lấy danh sách PO (phân trang, filter)"""
     page = request.args.get("page", 1, type=int)
@@ -37,7 +38,15 @@ def get_purchase_orders():
     if supplier_id_filter:
         query = query.filter(PurchaseOrder.supplier_id == supplier_id_filter)
 
-    pagination = query.order_by(PurchaseOrder.created_at.desc()).paginate(
+    status_order = case(
+        (PurchaseOrder.status == "chờ xác nhận", 1),
+        (PurchaseOrder.status == "đã xác nhận", 2),
+        (PurchaseOrder.status == "đang giao", 3),
+        (PurchaseOrder.status == "đã nhận", 4),
+        (PurchaseOrder.status == "hủy", 5),
+        else_=99,
+    )
+    pagination = query.order_by(status_order, PurchaseOrder.created_at.desc()).paginate(
         page=page, per_page=page_size, error_out=False
     )
 

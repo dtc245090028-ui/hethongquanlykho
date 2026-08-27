@@ -1,0 +1,1019 @@
+{
+  "schema": "ppt-master.svg-quality-report.v1",
+  "stage": "final",
+  "target": "C:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827",
+  "source_fingerprint": {
+    "algorithm": "sha256",
+    "digest": "d3ddf4549d035ce7c882b5caa856161d7ffb54413830de6a9bc9e509de3c7494",
+    "file_count": 10,
+    "files": [
+      {
+        "file": "P01.svg",
+        "sha256": "bdf01cc1eb86701002d6fc728e9fd6fa8b541fd46220c327ff312a4fe57be3bb"
+      },
+      {
+        "file": "P02.svg",
+        "sha256": "4a1bbb073194d05e48d57805c0e62e73b38aed0de70e1b5b54e9337ebf93f227"
+      },
+      {
+        "file": "P03.svg",
+        "sha256": "5cd713d8aaf9803f10fea7574a397caaaf72b1270e1ac3c2e309d346d5c21c89"
+      },
+      {
+        "file": "P04.svg",
+        "sha256": "14e080750d227dbc44da4def6e7464c52bc5fb99145a6a2b1f8dfb301dde15b1"
+      },
+      {
+        "file": "P05.svg",
+        "sha256": "f9723605fecb5d593b833c199c546a6ca860a7846cf913060da487d8a7eba52d"
+      },
+      {
+        "file": "P06.svg",
+        "sha256": "2db1ca92d79d170309930b5c68fa7f69129c8a09e5d7d2ed0719c7eaab11e696"
+      },
+      {
+        "file": "P07.svg",
+        "sha256": "5fa4b0d3716aef0a85dae5fe1cc7815f1bc5e814ad7c1d0ecbb77b9f3e4f61fc"
+      },
+      {
+        "file": "P08.svg",
+        "sha256": "0f94b6df25776ac34a3ee2be76433cffbb6178010057f650d09e6a201ad1d80e"
+      },
+      {
+        "file": "P09.svg",
+        "sha256": "716741770c8b2cfa213e9d10b43fbaa34e965e073d7c3fd3cd6ba2c292988992"
+      },
+      {
+        "file": "P10.svg",
+        "sha256": "ad5442a8274bd3ab69869613243dd4418f43a54ff90040eae8f4df7d3962fbcb"
+      }
+    ]
+  },
+  "summary": {
+    "total": 10,
+    "passed": 0,
+    "warnings": 10,
+    "errors": 0
+  },
+  "issue_types": {},
+  "categories": {
+    "blocking": {
+      "count": 0,
+      "issues": []
+    },
+    "introduced": {
+      "count": 42,
+      "issues": [
+        {
+          "file": "P01.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P01.svg",
+          "message": "18 ungrouped top-level Slide-local element(s) in svg_output (<rect> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P01.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P02.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P02.svg",
+          "message": "18 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P02.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P03.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P03.svg",
+          "message": "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates"
+        },
+        {
+          "file": "P03.svg",
+          "message": "Top-level visible <g> #5 has no id; object-level animation config cannot reference it"
+        },
+        {
+          "file": "P03.svg",
+          "message": "7 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P03.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P04.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P04.svg",
+          "message": "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates"
+        },
+        {
+          "file": "P04.svg",
+          "message": "Top-level visible <g> #5 has no id; object-level animation config cannot reference it"
+        },
+        {
+          "file": "P04.svg",
+          "message": "12 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P04.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P05.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P05.svg",
+          "message": "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates"
+        },
+        {
+          "file": "P05.svg",
+          "message": "Top-level visible <g> #6 has no id; object-level animation config cannot reference it"
+        },
+        {
+          "file": "P05.svg",
+          "message": "8 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P05.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P06.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P06.svg",
+          "message": "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P06.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P07.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P07.svg",
+          "message": "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P07.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P08.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P08.svg",
+          "message": "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates"
+        },
+        {
+          "file": "P08.svg",
+          "message": "Top-level visible <g> #5 has no id; object-level animation config cannot reference it"
+        },
+        {
+          "file": "P08.svg",
+          "message": "7 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P08.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P09.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P09.svg",
+          "message": "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates"
+        },
+        {
+          "file": "P09.svg",
+          "message": "Top-level visible <g> #5 has no id; object-level animation config cannot reference it"
+        },
+        {
+          "file": "P09.svg",
+          "message": "6 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P09.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        },
+        {
+          "file": "P10.svg",
+          "message": "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos"
+        },
+        {
+          "file": "P10.svg",
+          "message": "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates"
+        },
+        {
+          "file": "P10.svg",
+          "message": "Top-level visible <g> #8 has no id; object-level animation config cannot reference it"
+        },
+        {
+          "file": "P10.svg",
+          "message": "7 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "P10.svg",
+          "message": "page SVG is missing root data-pptx-page-role"
+        }
+      ]
+    },
+    "inherited": {
+      "count": 0,
+      "issues": []
+    },
+    "source-import": {
+      "count": 0,
+      "summary": {
+        "warning_count": 0,
+        "by_code": {}
+      }
+    }
+  },
+  "drift": {
+    "colors": {
+      "#FBE5DE": [
+        "P02.svg",
+        "P03.svg",
+        "P04.svg",
+        "P06.svg",
+        "P07.svg"
+      ]
+    },
+    "fonts": {
+      "Aptos": [
+        "P01.svg",
+        "P02.svg",
+        "P03.svg",
+        "P04.svg",
+        "P05.svg",
+        "P06.svg",
+        "P07.svg",
+        "P08.svg",
+        "P09.svg",
+        "P10.svg"
+      ],
+      "Aptos Display": [
+        "P01.svg",
+        "P02.svg",
+        "P03.svg",
+        "P04.svg",
+        "P05.svg",
+        "P06.svg",
+        "P07.svg",
+        "P08.svg",
+        "P09.svg",
+        "P10.svg"
+      ]
+    },
+    "sizes": {
+      "30": [
+        "P05.svg"
+      ],
+      "32": [
+        "P01.svg"
+      ],
+      "34": [
+        "P10.svg"
+      ],
+      "48": [
+        "P10.svg"
+      ],
+      "52": [
+        "P01.svg"
+      ]
+    }
+  },
+  "carrier_receipt": {
+    "scope": "informational-not-a-quota",
+    "pages": 10,
+    "totals": {
+      "text_elements": 155,
+      "image_placements": 0,
+      "icons": 0,
+      "svg_geometry_elements": 81,
+      "preset_shapes": 0,
+      "page_frame_elements": 0,
+      "marker_uses": 0
+    },
+    "pages_with": {
+      "images": 0,
+      "icons": 0,
+      "presets": 0,
+      "charts": 0,
+      "tables": 0,
+      "formulas": 0
+    },
+    "geometry_elements": {
+      "circle": 5,
+      "ellipse": 0,
+      "line": 23,
+      "path": 0,
+      "polygon": 0,
+      "polyline": 0,
+      "rect": 53
+    },
+    "preset_names": {},
+    "native_objects": {
+      "chart": 0,
+      "formula_block": 0,
+      "formula_inline": 0,
+      "other": 0,
+      "table": 0
+    },
+    "image_page_max_frame_share_range": []
+  },
+  "project_issues": {
+    "template": [],
+    "animation": [],
+    "illustration": [],
+    "communication_trace": [],
+    "pptx_structure": []
+  },
+  "files": [
+    {
+      "file": "P01.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P01.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "18 ungrouped top-level Slide-local element(s) in svg_output (<rect> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 13,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 5,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 1,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 13,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        },
+        "sparse_typography_sizes": {
+          "32": 1,
+          "52": 2
+        }
+      },
+      "passed": true,
+      "source_sha256": "bdf01cc1eb86701002d6fc728e9fd6fa8b541fd46220c327ff312a4fe57be3bb"
+    },
+    {
+      "file": "P02.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P02.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "18 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 15,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 3,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 1,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 15,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "colors": [
+            "#FBE5DE"
+          ],
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "4a1bbb073194d05e48d57805c0e62e73b38aed0de70e1b5b54e9337ebf93f227"
+    },
+    {
+      "file": "P03.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P03.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates",
+        "Top-level visible <g> #5 has no id; object-level animation config cannot reference it",
+        "7 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 18,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 8,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 6,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 18,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "colors": [
+            "#FBE5DE"
+          ],
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "5cd713d8aaf9803f10fea7574a397caaaf72b1270e1ac3c2e309d346d5c21c89"
+    },
+    {
+      "file": "P04.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P04.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates",
+        "Top-level visible <g> #5 has no id; object-level animation config cannot reference it",
+        "12 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 19,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 8,
+              "circle": 5,
+              "ellipse": 0,
+              "line": 2,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 19,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "colors": [
+            "#FBE5DE"
+          ],
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "14e080750d227dbc44da4def6e7464c52bc5fb99145a6a2b1f8dfb301dde15b1"
+    },
+    {
+      "file": "P05.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P05.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates",
+        "Top-level visible <g> #6 has no id; object-level animation config cannot reference it",
+        "8 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 15,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 4,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 2,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 15,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        },
+        "sparse_typography_sizes": {
+          "30": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "f9723605fecb5d593b833c199c546a6ca860a7846cf913060da487d8a7eba52d"
+    },
+    {
+      "file": "P06.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P06.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 16,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 5,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 1,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 16,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "colors": [
+            "#FBE5DE"
+          ],
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "2db1ca92d79d170309930b5c68fa7f69129c8a09e5d7d2ed0719c7eaab11e696"
+    },
+    {
+      "file": "P07.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P07.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 12,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 8,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 2,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 12,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "colors": [
+            "#FBE5DE"
+          ],
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "5fa4b0d3716aef0a85dae5fe1cc7815f1bc5e814ad7c1d0ecbb77b9f3e4f61fc"
+    },
+    {
+      "file": "P08.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P08.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates",
+        "Top-level visible <g> #5 has no id; object-level animation config cannot reference it",
+        "7 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 15,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 7,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 5,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 15,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "0f94b6df25776ac34a3ee2be76433cffbb6178010057f650d09e6a201ad1d80e"
+    },
+    {
+      "file": "P09.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P09.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates",
+        "Top-level visible <g> #5 has no id; object-level animation config cannot reference it",
+        "6 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 20,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 1,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 2,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 20,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "716741770c8b2cfa213e9d10b43fbaa34e965e073d7c3fd3cd6ba2c292988992"
+    },
+    {
+      "file": "P10.svg",
+      "path": "c:\\gemini-thu-nghiem\\projects\\warehouse-ai-phase1-presentation_20260827\\svg_output\\P10.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "Font stack exports non-PPT-safe typeface(s) to PPTX (latin=Aptos): Aptos",
+        "Reference SVG: detected 1 visible root-level <g> module(s) without explicit data-pptx-bounds (<g>); every final-page/template root <g> other than a compact authored-preset atom declares its root-coordinate layout subcanvas even when it also carries native coordinates",
+        "Top-level visible <g> #8 has no id; object-level animation config cannot reference it",
+        "7 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\"",
+        "page SVG is missing root data-pptx-page-role"
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 12,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "geometry": {
+            "svg_elements": {
+              "rect": 4,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 1,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 0,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Aptos",
+          "Aptos Display"
+        ],
+        "text_elements": 12,
+        "tspan_elements": 0,
+        "contextual_values": {
+          "font_families": [
+            "Aptos",
+            "Aptos Display"
+          ]
+        },
+        "sparse_typography_sizes": {
+          "34": 1,
+          "48": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "ad5442a8274bd3ab69869613243dd4418f43a54ff90040eae8f4df7d3962fbcb"
+    }
+  ]
+}

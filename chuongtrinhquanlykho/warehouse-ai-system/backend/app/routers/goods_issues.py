@@ -40,7 +40,7 @@ goods_issues_bp = Blueprint(
 # ---------------------------------------------------------------------------
 @goods_issues_bp.route("", methods=["GET"])
 @jwt_required()
-@roles_required("warehouse_keeper", "warehouse_manager")
+@roles_required("admin", "warehouse_keeper", "warehouse_manager")
 def get_goods_issues():
     """
     Lấy danh sách phiếu xuất với phân trang và filter tùy chọn.

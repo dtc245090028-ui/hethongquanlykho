@@ -33,6 +33,7 @@ from app.models.supplier import Supplier
 from app.models.goods_receipt import GoodsReceipt
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
+from sqlalchemy import case
 
 # Blueprint — url_prefix theo chuẩn api_contract.md
 supplier_invoices_bp = Blueprint(
@@ -91,7 +92,13 @@ def get_supplier_invoices():
     if payment_status:
         query = query.filter(SupplierInvoice.payment_status == payment_status)
 
-    pagination = query.order_by(SupplierInvoice.issue_date.desc()).paginate(
+    payment_status_order = case(
+        (SupplierInvoice.payment_status == "chưa thanh toán", 1),
+        (SupplierInvoice.payment_status == "thanh toán một phần", 2),
+        (SupplierInvoice.payment_status == "đã thanh toán", 3),
+        else_=99,
+    )
+    pagination = query.order_by(payment_status_order, SupplierInvoice.issue_date.desc()).paginate(
         page=page, per_page=page_size, error_out=False
     )
 

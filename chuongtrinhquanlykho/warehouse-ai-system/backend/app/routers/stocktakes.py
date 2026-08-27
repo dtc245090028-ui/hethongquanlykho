@@ -4,6 +4,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
 from app.models.stocktake import Stocktake, StocktakeItem
 from app.models.goods import Goods
+from sqlalchemy import case
 
 stocktakes_bp = Blueprint("stocktakes", __name__, url_prefix="/api/stocktakes")
 
@@ -14,7 +15,14 @@ def get_stocktakes():
     page = request.args.get("page", 1, type=int)
     page_size = request.args.get("page_size", 20, type=int)
 
-    query = Stocktake.query.order_by(Stocktake.created_at.desc())
+    status_order = case(
+        (Stocktake.status == "đang kiểm kê", 1),
+        (Stocktake.status == "chờ phê duyệt", 2),
+        (Stocktake.status == "đã phê duyệt", 3),
+        (Stocktake.status == "đã hủy", 4),
+        else_=99,
+    )
+    query = Stocktake.query.order_by(status_order, Stocktake.created_at.desc())
     paginated = query.paginate(page=page, per_page=page_size, error_out=False)
 
     return jsonify({

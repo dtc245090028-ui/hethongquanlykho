@@ -44,7 +44,7 @@ goods_receipts_bp = Blueprint(
 # ---------------------------------------------------------------------------
 @goods_receipts_bp.route("", methods=["GET"])
 @jwt_required()
-@roles_required("warehouse_keeper", "warehouse_manager")
+@roles_required("admin", "warehouse_keeper", "warehouse_manager")
 def get_goods_receipts():
     """
     Lấy danh sách phiếu nhập với phân trang và filter tùy chọn.
