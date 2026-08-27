@@ -25,8 +25,12 @@ Ràng buộc nghiệp vụ quan trọng (Prompt.md mục 3.3 & 6.2):
     để tránh sai lệch số liệu (xem routers/goods_receipts.py)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class GoodsReceipt(db.Model):
@@ -74,7 +78,7 @@ class GoodsReceipt(db.Model):
     # ---- Thông tin phiếu nhập ----
     received_date = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
     """Ngày giờ thực tế nhận hàng (UTC). Mặc định lúc tạo phiếu."""
@@ -85,11 +89,11 @@ class GoodsReceipt(db.Model):
     """
 
     # ---- Audit timestamp ----
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
         nullable=False,
     )
 

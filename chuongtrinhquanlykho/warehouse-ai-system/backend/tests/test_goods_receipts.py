@@ -459,3 +459,35 @@ def test_get_receipt_not_found(client, keeper_headers):
     res = client.get("/api/goods-receipts/9999", headers=keeper_headers)
     assert res.status_code == 404
     assert res.json["error_code"] == "RECEIPT_NOT_FOUND"
+
+
+def test_receipt_cannot_exceed_purchase_order(client, keeper_headers):
+    """Tổng số nhận theo PO không được vượt số lượng đã đặt."""
+    res = client.post(
+        "/api/goods-receipts",
+        json=valid_receipt_payload(po_id=1, quantity=101),
+        headers=keeper_headers,
+    )
+
+    assert res.status_code == 400
+    assert res.json["error_code"] == "PO_QUANTITY_EXCEEDED"
+
+
+def test_receipt_checks_previous_receipts_against_purchase_order(
+    client, keeper_headers
+):
+    """Các phiếu nhập trước đó cũng được tính khi đối chiếu PO."""
+    first = client.post(
+        "/api/goods-receipts",
+        json=valid_receipt_payload(po_id=1, quantity=60),
+        headers=keeper_headers,
+    )
+    second = client.post(
+        "/api/goods-receipts",
+        json=valid_receipt_payload(po_id=1, quantity=41),
+        headers=keeper_headers,
+    )
+
+    assert first.status_code == 201
+    assert second.status_code == 400
+    assert second.json["error_code"] == "PO_QUANTITY_EXCEEDED"

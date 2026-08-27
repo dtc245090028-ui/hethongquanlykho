@@ -116,7 +116,7 @@ def test_propose_and_approve_stocktake(client, app):
     assert res3.get_json()["status"] == "đã phê duyệt"
 
     with app.app_context():
-        updated_goods = Goods.query.get(goods_id)
+        updated_goods = db.session.get(Goods, goods_id)
         assert updated_goods.quantity_on_hand == 90.0
 
 def test_create_stocktake_negative_quantity(client, app):

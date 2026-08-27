@@ -1,3 +1,15 @@
+# Chạy nhanh bằng VS Code
+
+Workspace đã có cấu hình `.vscode/launch.json` để chạy không cần gõ lệnh thủ công:
+
+1. Mở thanh **Run and Debug** (`Ctrl+Shift+D`).
+2. Chọn `Warehouse System (API + Frontend)`.
+3. Bấm `F5`.
+
+Cấu hình này chạy Flask API tại `http://localhost:5000` và frontend static tại
+`http://localhost:5500`. Trình duyệt sẽ tự mở trang frontend. Cần tạo
+`backend/.env` trước nếu dùng AI/Gemini.
+
 # Hệ thống quản lý kho có tích hợp AI
 
 Đồ án môn học — Hệ thống quản lý hàng hóa, nhà cung cấp, phiếu nhập/xuất và tồn kho, tích hợp AI sinh báo cáo và gợi ý nhập hàng.

@@ -1,6 +1,19 @@
 # Báo Cáo Rà Soát Hệ Thống Quản Lý Kho (Thiếu sót và Cần hoàn thiện)
 
-Mình đã rà hệ thống. Hiện tại backend có **120 test pass**, nhưng vẫn thiếu các phần quan trọng sau:
+**Cập nhật ngày 27/08/2026:**
+- ✅ Frontend + Backend đã kết nối thành công
+- ✅ Hệ thống đăng nhập hoạt động (JWT auth)
+- ✅ Dashboard load được với dữ liệu seed (8 mặt hàng, 4 dưới ngưỡng Min)
+- ✅ Phân quyền theo role: admin, warehouse_manager, warehouse_keeper
+
+**Seed data test accounts:**
+- `admin01` / `Password@123` → Ban điều hành
+- `manager01` / `Password@123` → Quản lý kho
+- `keeper01` / `Password@123` → Thủ kho
+
+---
+
+Mình đã rà hệ thống. Backend có **120 test pass**, nhưng vẫn thiếu các phần quan trọng sau:
 
 ## Thiếu chức năng nghiệp vụ
 
@@ -40,7 +53,6 @@ Mình đã rà hệ thống. Hiện tại backend có **120 test pass**, nhưng 
 - Có secret mặc định không an toàn nếu quên cấu hình `.env`: `main.py:99`.
 - Thiếu dependency `marshmallow-sqlalchemy`, gây warning khi chạy test.
 - Có nhiều cảnh báo deprecated từ `Query.get()` và `datetime.utcnow()`.
-- Có nhiều file database phát sinh/không được quản lý rõ trong worktree: `backend/warehouse.db`, thư mục gốc `warehouse.db`, `backend/instance/warehouse.db`.
 
 ## Thiếu tài liệu bàn giao
 
@@ -53,8 +65,17 @@ Theo đặc tả, hiện còn thiếu:
 
 ## Ưu tiên nên làm trước
 
-1. Audit log và quản lý tài khoản.
+**Đã hoàn thành:**
+- ✅ Frontend + Backend integration (serve frontend files, CORS, static routes)
+- ✅ Đăng nhập và JWT auth hoạt động
+- ✅ Seed data script với 3 test users
+- ✅ Database path consistency (instance/warehouse.db)
+
+**Cần làm tiếp:**
+1. Audit log và quản lý tài khoản (CRUD user, khóa/mở tài khoản).
 2. Backup/restore database.
 3. Hoàn thiện đối chiếu PO, thanh lý hàng và thông báo scheduler.
 4. Thêm schema validation, xử lý lỗi AI và giới hạn dữ liệu AI.
-5. Hoàn thiện tài liệu/báo cáo bàn giao.
+5. Hoàn thiện tài liệu/báo cáo bàn giao (ERD, design, use case, final report).
+6. Kiểm tra phân quyền trên tất cả endpoints theo role.
+7. Test toàn bộ flow từ login → CRUD data → AI features → báo cáo.

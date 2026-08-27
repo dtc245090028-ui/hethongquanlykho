@@ -174,7 +174,7 @@ def test_create_issue_valid_single_item(client, keeper_token, app):
 
     # Kiểm tra tồn kho đã giảm đúng trong DB
     with app.app_context():
-        g = Goods.query.get(1)
+        g = db.session.get(Goods, 1)
         assert g.quantity_on_hand == 70
 
 
@@ -201,8 +201,8 @@ def test_create_issue_valid_multiple_items(client, keeper_token, app):
     assert len(data["items"]) == 2
 
     with app.app_context():
-        assert Goods.query.get(1).quantity_on_hand == 90
-        assert Goods.query.get(2).quantity_on_hand == 45
+        assert db.session.get(Goods, 1).quantity_on_hand == 90
+        assert db.session.get(Goods, 2).quantity_on_hand == 45
 
 
 # ---------------------------------------------------------------------------
@@ -222,7 +222,7 @@ def test_create_issue_exact_stock(client, keeper_token, app):
     assert res.status_code == 201
 
     with app.app_context():
-        assert Goods.query.get(2).quantity_on_hand == 0
+        assert db.session.get(Goods, 2).quantity_on_hand == 0
 
 
 # ---------------------------------------------------------------------------
@@ -377,7 +377,7 @@ def test_create_issue_exceeds_stock(client, keeper_token, app):
 
     # Quan trọng: tồn kho KHÔNG được thay đổi (rollback thành công)
     with app.app_context():
-        g = Goods.query.get(1)
+        g = db.session.get(Goods, 1)
         assert g.quantity_on_hand == 100
 
 

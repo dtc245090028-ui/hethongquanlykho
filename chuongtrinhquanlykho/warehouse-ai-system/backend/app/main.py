@@ -61,9 +61,10 @@ def create_app(test_config: dict = None) -> Flask:
         app.config.update(test_config)
 
     # ---- Bật CORS (Cross-Origin Resource Sharing) ----
-    # Cho phép frontend (chạy port khác) gọi API backend
-    # origins="*" chỉ dùng khi dev; production nên giới hạn domain cụ thể
-    CORS(app, origins="*")
+    # Cho phép frontend (chạy port khác) gọi API backend. Production
+    # có thể giới hạn origin qua CORS_ORIGINS, phân cách bằng dấu phẩy.
+    cors_origins = os.getenv("CORS_ORIGINS", "*")
+    CORS(app, origins=[origin.strip() for origin in cors_origins.split(",")])
 
     # ---- Khởi tạo extensions với app ----
     db.init_app(app)     # SQLAlchemy biết dùng config của app này
@@ -79,6 +80,32 @@ def create_app(test_config: dict = None) -> Flask:
 
     # ---- Đăng ký Blueprints (routers) ----
     _register_blueprints(app)
+
+    # ---- Serve Frontend files ----
+    # Route root "/" phục vụ index.html để frontend có thể load
+    @app.route("/")
+    def index():
+        from flask import send_from_directory
+        frontend_path = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+        return send_from_directory(frontend_path, "index.html")
+
+    # Route "/dashboard.html"
+    @app.route("/dashboard.html")
+    def dashboard():
+        from flask import send_from_directory
+        frontend_path = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+        return send_from_directory(frontend_path, "dashboard.html")
+
+    # Route để serve CSS/JS/Images từ frontend
+    @app.route("/<path:filename>")
+    def serve_static(filename):
+        from flask import send_from_directory
+        frontend_path = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+        try:
+            return send_from_directory(frontend_path, filename)
+        except:
+            # Nếu file không tồn tại, trả về 404
+            return {"error_code": "NOT_FOUND", "message": "Không tìm thấy tài nguyên yêu cầu"}, 404
 
     # ---- Đăng ký Error Handlers dùng chung ----
     _register_error_handlers(app)
@@ -99,18 +126,27 @@ def _configure_app(app: Flask) -> None:
     Tách ra hàm riêng để dễ đọc và dễ test.
     """
     # CSDL — đọc từ DATABASE_URL, mặc định SQLite
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "DATABASE_URL", "sqlite:///./warehouse.db"
-    )
+    # Tạo instance folder nếu chưa tồn tại
+    instance_path = os.path.join(os.path.dirname(__file__), '..', 'instance')
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path, exist_ok=True)
+    
+    db_path = os.path.join(instance_path, 'warehouse.db')
+    db_uri = f'sqlite:///{db_path}' if os.name == 'nt' else f'sqlite:///{db_path}'
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", db_uri)
     # Tắt tính năng theo dõi thay đổi (tốn RAM, không cần thiết)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Secret key — dùng để ký JWT và session cookie
     # PHẢI thay bằng chuỗi ngẫu nhiên dài khi triển khai production
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "change_me_in_production")
+    app.config["SECRET_KEY"] = os.getenv(
+        "SECRET_KEY", "development-secret-key-change-in-production-32-chars"
+    )
 
     # JWT config
-    app.config["JWT_SECRET_KEY"] = os.getenv("SECRET_KEY", "change_me_in_production")
+    app.config["JWT_SECRET_KEY"] = os.getenv(
+        "SECRET_KEY", "development-secret-key-change-in-production-32-chars"
+    )
     # Lưu JWT_EXPIRE_MINUTES vào config để auth/routes.py đọc được
     app.config["JWT_EXPIRE_MINUTES"] = os.getenv("JWT_EXPIRE_MINUTES", "60")
 
@@ -126,6 +162,14 @@ def _register_blueprints(app: Flask) -> None:
     # Module Auth — /api/auth/login, /api/auth/logout, /api/auth/me
     from app.auth import auth_bp
     app.register_blueprint(auth_bp)
+
+    # Module Users — /api/users (chỉ admin)
+    from app.routers.users import users_bp
+    app.register_blueprint(users_bp)
+
+    # Module Categories — /api/categories
+    from app.routers.categories import categories_bp
+    app.register_blueprint(categories_bp)
 
     # Module Suppliers — /api/suppliers (GET, POST, GET/id, PUT/id, DELETE/id)
     from app.routers.suppliers import suppliers_bp

@@ -190,6 +190,7 @@ def create_goods_receipt():
 
     # ---- Kiểm tra PO (nếu có po_id) ----
     po_id = data.get("po_id")
+    po = None
     if po_id is not None:
         po = db.session.get(PurchaseOrder, po_id)
         if not po:
@@ -261,6 +262,43 @@ def create_goods_receipt():
                     "message": f"Dòng {idx}: hàng hóa '{goods.name}' đã ngừng kinh doanh"
                 }), 400
             goods_map[goods_id] = goods
+
+    # ---- Đối chiếu số lượng nhận với PO ----
+    # Tính cả các phiếu nhập trước đó để không thể nhận vượt số lượng đặt.
+    if po is not None:
+        requested_quantities = {}
+        for item in items_data:
+            goods_id = item["goods_id"]
+            requested_quantities[goods_id] = (
+                requested_quantities.get(goods_id, 0) + float(item["quantity"])
+            )
+
+        received_quantities = {}
+        previous_items = (
+            GoodsReceiptItem.query
+            .join(GoodsReceipt)
+            .filter(GoodsReceipt.po_id == po.id)
+            .all()
+        )
+        for item in previous_items:
+            received_quantities[item.goods_id] = (
+                received_quantities.get(item.goods_id, 0) + item.quantity
+            )
+
+        ordered_quantities = {
+            item.goods_id: item.quantity_ordered for item in po.items
+        }
+        for goods_id, requested_quantity in requested_quantities.items():
+            ordered_quantity = ordered_quantities.get(goods_id, 0)
+            received_quantity = received_quantities.get(goods_id, 0)
+            if received_quantity + requested_quantity > ordered_quantity:
+                return jsonify({
+                    "error_code": "PO_QUANTITY_EXCEEDED",
+                    "message": (
+                        f"Số lượng nhận của hàng hóa ID {goods_id} vượt số lượng đặt trong PO "
+                        f"({ordered_quantity})"
+                    ),
+                }), 400
 
     # ---- Tạo phiếu nhập + cập nhật tồn kho (transaction) ----
     # Dùng try/except để đảm bảo rollback nếu có lỗi bất ngờ

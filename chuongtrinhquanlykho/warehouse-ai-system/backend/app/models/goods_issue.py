@@ -23,8 +23,12 @@ Ràng buộc nghiệp vụ quan trọng (Prompt.md mục 3.3, 6.2, 10):
     → rollback toàn bộ nếu bất kỳ bước nào thất bại
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class GoodsIssue(db.Model):
@@ -52,7 +56,7 @@ class GoodsIssue(db.Model):
     # ---- Thông tin phiếu xuất ----
     issued_date = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
     """Ngày giờ thực tế xuất hàng (UTC). Mặc định lúc tạo phiếu."""
@@ -63,11 +67,11 @@ class GoodsIssue(db.Model):
     """
 
     # ---- Audit timestamp ----
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
         nullable=False,
     )
 

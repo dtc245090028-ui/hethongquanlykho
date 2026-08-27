@@ -13,9 +13,13 @@ Lưu ý bảo mật:
   - Luôn dùng bcrypt để hash và verify (xem method set_password / check_password)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 import bcrypt
+
+
+def utc_now() -> datetime:
+  return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(db.Model):
@@ -65,7 +69,7 @@ class User(db.Model):
     mà không cần xóa user (giữ lại lịch sử thao tác).
     """
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     """Thời điểm tạo tài khoản (UTC)"""
 
     # ---- Methods ----

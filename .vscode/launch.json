@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Warehouse API (Flask)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "app.main",
+      "cwd": "${workspaceFolder}/chuongtrinhquanlykho/warehouse-ai-system/backend",
+      "console": "integratedTerminal",
+      "env": {
+        "FLASK_ENV": "development",
+        "FLASK_PORT": "5000"
+      }
+    },
+    {
+      "name": "Warehouse Frontend (static)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "http.server",
+      "args": ["5500"],
+      "cwd": "${workspaceFolder}/chuongtrinhquanlykho/warehouse-ai-system/frontend",
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Serving HTTP on .* port (\\d+)",
+        "uriFormat": "http://localhost:%s"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Warehouse System (API + Frontend)",
+      "configurations": [
+        "Warehouse API (Flask)",
+        "Warehouse Frontend (static)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

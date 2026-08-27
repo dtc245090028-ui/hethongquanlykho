@@ -1,5 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 class PurchaseOrder(db.Model):
     __tablename__ = "purchase_orders"
@@ -8,7 +12,7 @@ class PurchaseOrder(db.Model):
     supplier_id = db.Column(db.Integer, db.ForeignKey("suppliers.id"), nullable=False)
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     
-    order_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    order_date = db.Column(db.DateTime, default=utc_now, nullable=False)
     
     status = db.Column(
         db.Enum("chờ xác nhận", "đã xác nhận", "đang giao", "đã nhận", "hủy", name="purchase_order_status"),
@@ -16,11 +20,11 @@ class PurchaseOrder(db.Model):
         default="chờ xác nhận",
     )
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
         nullable=False,
     )
 

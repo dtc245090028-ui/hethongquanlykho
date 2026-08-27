@@ -23,6 +23,7 @@ bcrypt==4.1.3                 # Hash password an toàn (bcrypt algorithm)
 
 # --- Validation ---
 marshmallow==3.21.3           # Validate & serialize request/response data
+marshmallow-sqlalchemy==1.1.0 # Tích hợp schema Marshmallow với SQLAlchemy
 Flask-Marshmallow==1.2.1      # Tích hợp Marshmallow vào Flask
 
 # --- Environment ---

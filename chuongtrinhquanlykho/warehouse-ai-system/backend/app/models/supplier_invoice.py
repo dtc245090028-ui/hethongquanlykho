@@ -15,8 +15,12 @@ Ràng buộc quan trọng:
   - 1 receipt_id chỉ được liên kết với 1 hóa đơn duy nhất.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class SupplierInvoice(db.Model):
@@ -59,7 +63,7 @@ class SupplierInvoice(db.Model):
 
     issue_date = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
     """Ngày phát hành hóa đơn"""
@@ -83,11 +87,11 @@ class SupplierInvoice(db.Model):
     """
 
     # ---- Audit timestamp ----
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
         nullable=False,
     )
 
@@ -174,7 +178,7 @@ class SupplierPayment(db.Model):
 
     payment_date = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False,
     )
     """Ngày giờ thực hiện thanh toán"""

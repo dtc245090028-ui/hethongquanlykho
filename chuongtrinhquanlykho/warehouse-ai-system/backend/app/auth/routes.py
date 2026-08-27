@@ -80,10 +80,24 @@ def login():
     # filter_by tìm theo username, first() trả None nếu không tìm thấy
     user = User.query.filter_by(username=username).first()
 
+    # DEBUG: Log user lookup
+    if user is None:
+        current_app.logger.warning(f"🔍 User '{username}' not found in DB")
+    else:
+        current_app.logger.info(f"✅ User '{username}' found, checking password...")
+
     # --- Bước 4: Kiểm tra user tồn tại và trạng thái ---
     # Gộp 2 trường hợp (không tìm thấy + sai password) vào cùng 1 thông báo
     # → tránh tiết lộ "username này có tồn tại không" (security best practice)
-    if user is None or not user.check_password(password):
+    if user is None:
+        current_app.logger.error(f"❌ Login failed: user '{username}' not found")
+        return jsonify({
+            "error_code": "INVALID_CREDENTIALS",
+            "message": "Tên đăng nhập hoặc mật khẩu không chính xác",
+        }), 401
+    
+    if not user.check_password(password):
+        current_app.logger.error(f"❌ Login failed: password mismatch for user '{username}'")
         return jsonify({
             "error_code": "INVALID_CREDENTIALS",
             "message": "Tên đăng nhập hoặc mật khẩu không chính xác",

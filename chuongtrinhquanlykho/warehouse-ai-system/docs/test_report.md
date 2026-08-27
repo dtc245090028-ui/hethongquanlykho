@@ -7,17 +7,17 @@
 
 | Ca kiểm thử | Test function | Kết quả | Ngày test | Ghi chú |
 |---|---|---|---|---|
-| Đăng nhập hợp lệ | `test_login_success` | ⬜ Chưa chạy | | |
-| Sai password | `test_login_wrong_password` | ⬜ Chưa chạy | | |
-| Username không tồn tại | `test_login_wrong_username` | ⬜ Chưa chạy | | |
-| Thiếu field | `test_login_missing_fields` | ⬜ Chưa chạy | | |
-| Body rỗng | `test_login_empty_body` | ⬜ Chưa chạy | | |
-| Tài khoản bị khóa | `test_login_inactive_account` | ⬜ Chưa chạy | | |
-| GET /me token hợp lệ | `test_me_with_valid_token` | ⬜ Chưa chạy | | |
-| GET /me không có token | `test_me_without_token` | ⬜ Chưa chạy | | |
-| GET /me token giả | `test_me_with_invalid_token` | ⬜ Chưa chạy | | |
-| Logout thành công | `test_logout_success` | ⬜ Chưa chạy | | |
-| Logout không có token | `test_logout_without_token` | ⬜ Chưa chạy | | |
+| Đăng nhập hợp lệ | `test_login_success` | ✅ Pass | 2026-08-27 | |
+| Sai password | `test_login_wrong_password` | ✅ Pass | 2026-08-27 | |
+| Username không tồn tại | `test_login_wrong_username` | ✅ Pass | 2026-08-27 | |
+| Thiếu field | `test_login_missing_fields` | ✅ Pass | 2026-08-27 | |
+| Body rỗng | `test_login_empty_body` | ✅ Pass | 2026-08-27 | |
+| Tài khoản bị khóa | `test_login_inactive_account` | ✅ Pass | 2026-08-27 | |
+| GET /me token hợp lệ | `test_me_with_valid_token` | ✅ Pass | 2026-08-27 | |
+| GET /me không có token | `test_me_without_token` | ✅ Pass | 2026-08-27 | |
+| GET /me token giả | `test_me_with_invalid_token` | ✅ Pass | 2026-08-27 | |
+| Logout thành công | `test_logout_success` | ✅ Pass | 2026-08-27 | |
+| Logout không có token | `test_logout_without_token` | ✅ Pass | 2026-08-27 | |
 
 *(Đổi ⬜ → ✅ Pass hoặc ❌ Fail sau khi chạy `pytest tests/test_auth.py -v`)*
 
@@ -44,3 +44,16 @@
 | Không có token | `test_tc17_no_token` | ✅ Pass | 2026-08-20 | |
 
 *(Đã cập nhật sau khi chạy `pytest tests/test_reports.py -v`)*
+
+## Kết quả module Categories và Users
+
+| Nhóm kiểm thử | Lệnh chạy | Kết quả | Ngày test |
+|---|---|---|---|
+| Categories + Users | `pytest tests/test_categories_users.py -q` | ✅ 6 passed | 2026-08-27 |
+| Goods Receipts + Categories + Users | `pytest tests/test_goods_receipts.py tests/test_categories_users.py -q` | ✅ 30 passed | 2026-08-27 |
+
+## Ghi chú chạy toàn bộ test
+
+Lệnh `pytest -q` đã chạy qua 124 test trước khi bị dừng bởi `KeyboardInterrupt`
+do thời gian hash bcrypt trên môi trường hiện tại. Chưa ghi nhận assertion fail;
+cần chạy lại với thời gian chờ dài hơn để có tổng kết đầy đủ.

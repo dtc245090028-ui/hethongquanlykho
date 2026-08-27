@@ -16,8 +16,12 @@ Ràng buộc nghiệp vụ (AGENTS.md mục 7):
   để giữ lại lịch sử đơn hàng / phiếu nhập liên quan.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
+
+
+def utc_now() -> datetime:
+  return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class Supplier(db.Model):
@@ -96,13 +100,13 @@ class Supplier(db.Model):
 
     # ---- Audit timestamp ----
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
     """Thời điểm tạo bản ghi (UTC)"""
 
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=utc_now,
+        onupdate=utc_now,
         nullable=False,
     )
     """

@@ -334,7 +334,7 @@ def update_supplier(supplier_id: int):
     if "notes" in data:
         supplier.notes = (data["notes"] or "").strip() or None
 
-    db.session.commit()  # updated_at tự cập nhật nhờ onupdate=datetime.utcnow
+    db.session.commit()  # updated_at tự cập nhật nhờ onupdate=utc_now
 
     return jsonify(supplier.to_dict()), 200
 

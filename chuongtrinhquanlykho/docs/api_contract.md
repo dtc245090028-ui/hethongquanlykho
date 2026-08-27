@@ -77,6 +77,30 @@
 | 401 | `TOKEN_INVALID` | Token sai chữ ký |
 | 401 | `TOKEN_EXPIRED` | Token hết hạn |
 
+## 1A. Users (Quản lý tài khoản)
+
+| Method | Path | Mô tả | Role |
+|---|---|---|---|
+| GET | `/api/users` | Danh sách tài khoản | `admin` |
+| POST | `/api/users` | Tạo tài khoản | `admin` |
+| GET | `/api/users/{id}` | Chi tiết tài khoản | `admin` |
+| PUT | `/api/users/{id}` | Cập nhật role, trạng thái, thông tin | `admin` |
+| DELETE | `/api/users/{id}` | Khóa tài khoản (soft-delete) | `admin` |
+
+`POST /api/users` yêu cầu `username`, `full_name`, `password` (tối thiểu 8 ký tự)
+và `role`. Password không bao giờ được trả về trong response.
+
+## 1B. Categories (Danh mục hàng hóa)
+
+| Method | Path | Mô tả | Role |
+|---|---|---|---|
+| GET | `/api/categories` | Danh sách danh mục | Tất cả role đã đăng nhập |
+| POST | `/api/categories` | Tạo danh mục | `admin`, `warehouse_manager` |
+| GET | `/api/categories/{id}` | Chi tiết danh mục | Tất cả role đã đăng nhập |
+| PUT | `/api/categories/{id}` | Đổi tên danh mục | `admin`, `warehouse_manager` |
+
+Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
+
 ---
 
 ## 2. Suppliers (Nhà cung cấp)

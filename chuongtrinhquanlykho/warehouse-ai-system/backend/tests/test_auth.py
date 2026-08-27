@@ -26,13 +26,12 @@ def app():
     Tạo Flask app với CSDL SQLite in-memory riêng cho test.
     Dùng in-memory DB để mỗi test chạy độc lập, không ảnh hưởng nhau.
     """
-    test_app = create_app()
-    test_app.config.update({
+    test_app = create_app({
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",  # in-memory, không lưu file
         "JWT_EXPIRE_MINUTES": "60",
-        "SECRET_KEY": "test-secret-key",
-        "JWT_SECRET_KEY": "test-secret-key",
+        "SECRET_KEY": "test-secret-key-with-at-least-32-bytes",
+        "JWT_SECRET_KEY": "test-secret-key-with-at-least-32-bytes",
     })
 
     with test_app.app_context():
