@@ -1,4 +1,4 @@
-﻿/* =====================================================
+/* =====================================================
    layout.js — Render sidebar navigation và top navbar
    Inject HTML vào #sidebar-container và #topbar-container
    ===================================================== */
@@ -49,7 +49,10 @@ function renderLayout() {
         <!-- Brand logo -->
         <div class="sidebar-brand">
           <span class="brand-icon"><i class="bi bi-boxes"></i></span>
-          <span class="brand-text">Quản lý Kho</span>
+          <div class="ms-2">
+            <span class="brand-text d-block">Warehouse AI</span>
+            <span class="brand-sub">// Quản lý kho</span>
+          </div>
         </div>
 
         <!-- Navigation links -->
@@ -59,8 +62,8 @@ function renderLayout() {
 
         <!-- Footer sidebar: version -->
         <div class="sidebar-footer d-flex align-items-center" style="white-space:nowrap;overflow:hidden;">
-          <i class="bi bi-info-circle text-muted" style="min-width:38px;text-align:center;"></i>
-          <small class="nav-label text-muted">v1.0 — Đồ án 2026</small>
+          <i class="bi bi-circle-fill" style="min-width:38px;text-align:center;font-size:0.4rem;color:var(--accent-green);filter:drop-shadow(0 0 4px var(--accent-green));"></i>
+          <small class="nav-label" style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">v1.0 // SYS_STABLE</small>
         </div>
       </div>
       <!-- Overlay mobile -->
@@ -74,7 +77,7 @@ function renderLayout() {
     const roleLabel = auth.getRoleLabel();
     const roleBadgeClass = {
       admin: 'bg-danger',
-      warehouse_manager: 'bg-primary',
+      warehouse_manager: 'bg-warning',
       warehouse_keeper: 'bg-success',
     }[role] || 'bg-secondary';
 
