@@ -8,9 +8,9 @@
 --   psql -U <user> -d warehouse -f database/seed_data.sql
 --
 -- Dữ liệu bao gồm:
---   - 3 nhà cung cấp (suppliers)
---   - 3 danh mục hàng hóa (categories)
---   - 8 hàng hóa đa dạng — có hàng dưới Min, có hàng vượt Max để test cảnh báo
+--   - 6 nhà cung cấp (3 nguyên liệu thô, 2 bán thành phẩm, 1 thành phẩm)
+--   - 3 danh mục hàng hóa theo nhóm sản phẩm
+--   - 12 hàng hóa, mỗi nhà cung cấp cung cấp 2 hàng hóa
 --   - 3 user: 1 admin, 1 warehouse_manager, 1 warehouse_keeper
 --
 -- MẬT KHẨU MẪU (đã hash bcrypt, password gốc: "Password@123"):
@@ -72,58 +72,72 @@ INSERT INTO users (id, username, full_name, email, role, password_hash, is_activ
     '2026-01-01T08:00:00'
 );
 
--- ============================================================
--- BẢNG: suppliers — 3 nhà cung cấp
--- status: active | inactive
--- ============================================================
 INSERT INTO suppliers (id, name, contact_person, phone, email, address, tax_code, status, notes, created_at, updated_at) VALUES
 (
     1,
-    'Công ty TNHH Phụ Tùng Thiên Long',
+     'Công ty TNHH Nguyên Liệu Nhựa Việt',
     'Phạm Minh Đức',
     '0901234567',
     'duc.pham@thienlong.vn',
     '123 Đường Lý Thường Kiệt, Q.10, TP.HCM',
     '0312345678',
     'active',
-    'NCC ưu tiên cho linh kiện điện tử',
+    'Nhà cung cấp nguyên liệu thô: hạt nhựa và phụ gia sản xuất',
     '2026-01-05T09:00:00',
     '2026-01-05T09:00:00'
 ),
 (
     2,
-    'HTX Sản Xuất Văn Phòng Phẩm Bình Dương',
+     'Công ty CP Kim Loại Công Nghiệp Đông Nam',
     'Nguyễn Thị Hoa',
     '0912345678',
-    'hoa.nt@vppbinhduong.vn',
+    'hoa.nt@kimloaidongnam.vn',
     '45 Đường Trần Phú, TX.Thủ Dầu Một, Bình Dương',
     '3702345678',
     'active',
-    'Chuyên cung cấp văn phòng phẩm, giao hàng mỗi thứ 2',
+    'Nhà cung cấp nguyên liệu thô: thép cuộn và nhôm tấm',
     '2026-01-10T09:00:00',
     '2026-01-10T09:00:00'
 ),
 (
     3,
-    'Công ty CP Thiết Bị Bảo Hộ An Toàn Việt',
+     'Công ty TNHH Hóa Chất Sản Xuất Minh Phát',
     'Trần Quốc Hùng',
     '0987654321',
-    'hung.tq@baohoanviet.vn',
+    'hung.tq@minhphatchem.vn',
     '789 Đường Cộng Hòa, Q.Tân Bình, TP.HCM',
     '0312987654',
-    'inactive',
-    'Tạm ngừng hợp tác từ 2026-06 do giao hàng chậm',
+     'active',
+    'Nhà cung cấp nguyên liệu thô: dung môi và hóa chất phụ trợ',
     '2026-02-01T09:00:00',
     '2026-02-01T09:00:00'
+),
+(
+    4, 'Công ty TNHH Linh Kiện Bán Thành Phẩm Á Châu', 'Đỗ Văn Nam',
+    '0938123456', 'nam@linhkienachau.vn', '18 Đường Tân Tạo, Q.Bình Tân, TP.HCM',
+    '0313456789', 'active', 'Nhà cung cấp bán thành phẩm: cụm mạch và module điều khiển',
+    '2026-02-05T09:00:00', '2026-02-05T09:00:00'
+),
+(
+    5, 'Công ty CP Cơ Khí Bán Thành Phẩm Việt Thành', 'Võ Thị Lan',
+    '0949234567', 'lan@vietthanhco.vn', '66 Đường Nguyễn Văn Linh, Q.7, TP.HCM',
+    '0314567890', 'active', 'Nhà cung cấp bán thành phẩm: khung và vỏ cơ khí gia công sẵn',
+    '2026-02-10T09:00:00', '2026-02-10T09:00:00'
+),
+(
+    6, 'Công ty TNHH Sản Phẩm Hoàn Thiện Thành Công', 'Nguyễn Quốc Bảo',
+    '0958345678', 'bao@thanhcong.vn', '25 Đường Võ Văn Kiệt, Q.1, TP.HCM',
+    '0315678901', 'active', 'Nhà cung cấp thành phẩm: thiết bị hoàn thiện và hàng đóng gói sẵn',
+    '2026-02-15T09:00:00', '2026-02-15T09:00:00'
 );
 
 -- ============================================================
 -- BẢNG: categories — 3 nhóm hàng
 -- ============================================================
 INSERT INTO categories (id, name) VALUES
-(1, 'Linh kiện điện tử'),
-(2, 'Văn phòng phẩm'),
-(3, 'Thiết bị bảo hộ');
+(1, 'Nguyên liệu thô'),
+(2, 'Bán thành phẩm'),
+(3, 'Thành phẩm');
 
 -- ============================================================
 -- BẢNG: goods — 8 hàng hóa đa dạng
@@ -145,67 +159,91 @@ INSERT INTO goods (id, sku, name, category_id, preferred_supplier_id, unit,
                    min_stock, max_stock, quantity_on_hand,
                    selling_price, description, status, created_at, updated_at) VALUES
 (
-    1, 'SKU001', 'Tụ điện 100μF 25V',
-    1, 1, 'Cái',
-    20, 200, 5,          -- DƯỚI MIN: tồn 5 < min 20
-    2500.00,
-    'Tụ điện điện phân, dùng cho mạch nguồn và bộ lọc',
+    1, 'NL001', 'Hạt nhựa PP nguyên sinh',
+    1, 1, 'Kg',
+    20, 200, 5,
+    42000.00,
+    'Nguyên liệu thô dùng ép vỏ và chi tiết nhựa',
     'active', '2026-01-15T10:00:00', '2026-01-15T10:00:00'
 ),
 (
-    2, 'SKU002', 'Điện trở 10kΩ (gói 100 cái)',
-    1, 1, 'Gói',
-    10, 100, 12,         -- bình thường: tồn 12, min 10
-    15000.00,
-    'Điện trở carbon film 1/4W, sai số 5%, gói 100 cái',
+    2, 'NL002', 'Phụ gia chống UV cho nhựa',
+    1, 1, 'Kg',
+    10, 100, 12,
+    68000.00,
+    'Phụ gia nguyên liệu thô tăng độ bền màu sản phẩm',
     'active', '2026-01-15T10:00:00', '2026-01-15T10:00:00'
 ),
 (
-    3, 'SKU003', 'IC vi điều khiển Arduino Nano',
-    1, 1, 'Cái',
-    15, 80, 3,           -- DƯỚI MIN NGHIÊM TRỌNG: tồn 3 < min 15
-    120000.00,
-    'Arduino Nano v3 có bootloader, chip ATmega328P',
+    3, 'NL003', 'Thép cuộn cán nguội',
+    1, 2, 'Kg',
+    15, 80, 3,
+    26500.00,
+    'Nguyên liệu thô cho gia công khung và vỏ cơ khí',
     'active', '2026-01-15T10:00:00', '2026-01-15T10:00:00'
 ),
 (
-    4, 'SKU004', 'Giấy A4 70gsm (ream 500 tờ)',
-    2, 2, 'Ream',
-    10, 40, 50,          -- VƯỢT MAX: tồn 50 > max 40
-    85000.00,
-    'Giấy in văn phòng A4, 70gsm, 500 tờ/ream, đóng gói 10 ream/thùng',
-    'active', '2026-01-20T10:00:00', '2026-01-20T10:00:00'
-),
-(
-    5, 'SKU005', 'Bút bi Thiên Long TL-027',
-    2, 2, 'Hộp',
-    20, 100, 25,         -- bình thường: tồn 25, min 20, max 100
-    25000.00,
-    'Bút bi mực xanh, 0.7mm, hộp 20 cây',
-    'active', '2026-01-20T10:00:00', '2026-01-20T10:00:00'
-),
-(
-    6, 'SKU006', 'Mực in Canon PG-745 (đen)',
-    2, 2, 'Hộp',
-    10, 50, 8,           -- DƯỚI MIN: tồn 8 < min 10
+    4, 'NL004', 'Nhôm tấm 2mm',
+    1, 2, 'Tấm',
+    10, 40, 16,
     185000.00,
-    'Hộp mực in Canon PG-745 màu đen, dùng cho máy in MG2570S, iP2870S',
+    'Nguyên liệu thô dùng gia công mặt dựng thiết bị',
+    'active', '2026-01-20T10:00:00', '2026-01-20T10:00:00'
+),
+(
+    5, 'NL005', 'Dung môi công nghiệp IPA',
+    1, 3, 'Can',
+    20, 100, 25,
+    95000.00,
+    'Dung môi nguyên liệu thô dùng vệ sinh bề mặt',
+    'active', '2026-01-20T10:00:00', '2026-01-20T10:00:00'
+),
+(
+    6, 'NL006', 'Chất đóng rắn epoxy',
+    1, 3, 'Kg',
+    10, 50, 8,
+    145000.00,
+    'Hóa chất nguyên liệu thô dùng phối trộn keo epoxy',
     'active', '2026-02-01T10:00:00', '2026-02-01T10:00:00'
 ),
 (
-    7, 'SKU007', 'Mũ bảo hộ lao động (loại PE)',
-    3, 3, 'Cái',
-    5, 50, 0,            -- HẾT HÀNG: tồn 0 < min 5
-    55000.00,
-    'Mũ bảo hộ lao động nhựa PE, màu vàng, có khóa điều chỉnh',
+    7, 'BTP001', 'Cụm mạch điều khiển nguồn',
+    2, 4, 'Bộ',
+    5, 30, 0,
+    320000.00,
+    'Bán thành phẩm đã lắp linh kiện và kiểm tra chức năng',
     'active', '2026-02-10T10:00:00', '2026-02-10T10:00:00'
 ),
 (
-    8, 'SKU008', 'Băng keo đóng hàng 48mm x 100m',
-    2, 2, 'Cuộn',
-    30, 150, 200,        -- VƯỢT MAX: tồn 200 > max 150
-    18000.00,
-    'Băng keo OPP trong suốt, lõi 76mm, 48mm x 100m',
+    8, 'BTP002', 'Module hiển thị LCD 16x2',
+    2, 4, 'Bộ',
+    10, 40, 16,
+    98000.00,
+    'Bán thành phẩm hiển thị dùng cho thiết bị hoàn chỉnh',
+    'active', '2026-02-20T10:00:00', '2026-02-20T10:00:00'
+),
+(
+    9, 'BTP003', 'Khung thép sơn tĩnh điện',
+    2, 5, 'Cái', 10, 40, 16, 285000.00,
+    'Bán thành phẩm cơ khí đã gia công và sơn hoàn thiện',
+    'active', '2026-02-20T10:00:00', '2026-02-20T10:00:00'
+),
+(
+    10, 'BTP004', 'Vỏ nhôm gia công CNC',
+    2, 5, 'Cái', 10, 50, 8, 410000.00,
+    'Bán thành phẩm vỏ nhôm đã cắt và xử lý bề mặt',
+    'active', '2026-02-20T10:00:00', '2026-02-20T10:00:00'
+),
+(
+    11, 'TP001', 'Bộ điều khiển đóng gói hoàn chỉnh',
+    3, 6, 'Bộ', 5, 30, 9, 1250000.00,
+    'Thành phẩm đã lắp ráp, kiểm thử và đóng gói',
+    'active', '2026-02-25T10:00:00', '2026-02-25T10:00:00'
+),
+(
+    12, 'TP002', 'Thiết bị giám sát nhiệt độ',
+    3, 6, 'Cái', 5, 25, 4, 890000.00,
+    'Thành phẩm sẵn sàng giao cho khách hàng',
     'active', '2026-02-10T10:00:00', '2026-02-10T10:00:00'
 );
 
@@ -215,14 +253,14 @@ INSERT INTO goods (id, sku, name, category_id, preferred_supplier_id, unit,
 -- ============================================================
 INSERT INTO purchase_orders (id, supplier_id, created_by, order_date, status, created_at, updated_at) VALUES
 (1, 1, 2, '2026-08-27T08:30:00', 'chờ xác nhận', '2026-08-27T08:30:00', '2026-08-27T08:30:00'),
-(2, 2, 2, '2026-08-26T14:00:00', 'đang giao',    '2026-08-26T14:00:00', '2026-08-26T14:00:00'),
+(2, 3, 2, '2026-08-26T14:00:00', 'đang giao',    '2026-08-26T14:00:00', '2026-08-26T14:00:00'),
 (3, 1, 2, '2026-08-20T10:00:00', 'đã nhận',      '2026-08-20T10:00:00', '2026-08-22T16:00:00');
 
 INSERT INTO purchase_order_items (po_id, goods_id, quantity_ordered, unit_price) VALUES
 (1, 1, 100, 2200),
-(1, 3, 30, 115000),
-(2, 5, 40, 76000),
-(2, 6, 20, 165000),
+(1, 2, 30, 68000),
+(2, 5, 40, 95000),
+(2, 6, 20, 145000),
 (3, 2, 100, 1200);
 
 -- ============================================================
@@ -231,13 +269,13 @@ INSERT INTO purchase_order_items (po_id, goods_id, quantity_ordered, unit_price)
 -- ============================================================
 INSERT INTO goods_receipts (id, supplier_id, po_id, created_by, received_date, note, created_at, updated_at) VALUES
 (1, 1, 3, 3, '2026-08-22T15:30:00', 'Đã nhận đủ theo đơn đặt hàng PO-003', '2026-08-22T15:30:00', '2026-08-22T15:30:00'),
-(2, 2, 2, 3, '2026-08-27T09:00:00', 'Nhận đợt 1, còn thiếu một phần mực in', '2026-08-27T09:00:00', '2026-08-27T09:00:00'),
+(2, 3, 2, 3, '2026-08-27T09:00:00', 'Nhận đợt 1, còn thiếu một phần hóa chất', '2026-08-27T09:00:00', '2026-08-27T09:00:00'),
 (3, 1, NULL, 3, '2026-08-27T11:15:00', 'Nhập bổ sung hàng mẫu từ nhà cung cấp', '2026-08-27T11:15:00', '2026-08-27T11:15:00');
 
 INSERT INTO goods_receipt_items (receipt_id, goods_id, quantity, unit_price) VALUES
 (1, 2, 100, 1200),
-(2, 5, 25, 76000),
-(2, 6, 10, 165000),
+(2, 5, 25, 95000),
+(2, 6, 10, 145000),
 (3, 1, 20, 2200);
 
 -- ============================================================
@@ -274,7 +312,7 @@ INSERT INTO stocktake_items (stocktake_id, goods_id, system_quantity, actual_qua
 -- ============================================================
 INSERT INTO supplier_invoices (id, supplier_id, receipt_id, invoice_number, issue_date, total_amount, payment_status, created_at, updated_at) VALUES
 (1, 1, 1, 'INV-TL-0822', '2026-08-22T00:00:00', 120000, 'đã thanh toán', '2026-08-22T00:00:00', '2026-08-23T00:00:00'),
-(2, 2, 2, 'INV-BD-0827', '2026-08-27T00:00:00', 3550000, 'thanh toán một phần', '2026-08-27T09:00:00', '2026-08-27T09:00:00');
+(2, 3, 2, 'INV-MP-0827', '2026-08-27T00:00:00', 3550000, 'thanh toán một phần', '2026-08-27T09:00:00', '2026-08-27T09:00:00');
 
 INSERT INTO supplier_payments (invoice_id, amount, payment_date, method) VALUES
 (1, 120000, '2026-08-23T00:00:00', 'chuyển khoản'),

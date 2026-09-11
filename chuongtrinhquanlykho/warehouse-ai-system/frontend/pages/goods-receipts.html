@@ -71,8 +71,10 @@
           <div id="form-error" class="alert alert-danger d-none py-2"></div>
           <div class="row g-3 mb-3">
             <div class="col-md-4">
-              <label class="form-label required">ID Nhà cung cấp</label>
-              <input type="number" id="f-supplier" class="form-control" min="1" placeholder="ID NCC" required/>
+              <label class="form-label required">Nhà cung cấp</label>
+              <select id="f-supplier" class="form-select" required>
+                <option value="">Đang tải nhà cung cấp...</option>
+              </select>
             </div>
             <div class="col-md-4">
               <label class="form-label">ID Đơn đặt hàng (PO)</label>
@@ -97,7 +99,7 @@
           <div class="table-responsive">
             <table class="table table-bordered table-sm">
               <thead class="table-light">
-                <tr><th>ID Hàng hóa</th><th>Số lượng nhập</th><th>Đơn giá nhập (VND)</th><th style="width:50px"></th></tr>
+                <tr><th>Hàng hóa</th><th>Số lượng nhập</th><th>Đơn giá nhập (VND)</th><th style="width:50px"></th></tr>
               </thead>
               <tbody id="items-tbody"></tbody>
             </table>
@@ -142,8 +144,29 @@
     /* ========= Phiếu nhập kho ========= */
     let currentPage = 1;
     const PAGE_SIZE = 20;
+    let goodsOptions = [];
     const receiptModal = new bootstrap.Modal(document.getElementById('receipt-modal'));
     const detailModal  = new bootstrap.Modal(document.getElementById('detail-modal'));
+
+    async function loadGoodsOptions() {
+      const data = await api.get('/goods', { page: 1, page_size: 1000, status: 'active' });
+      goodsOptions = data.data || [];
+    }
+
+    async function loadSupplierOptions() {
+      const data = await api.get('/suppliers', { page: 1, page_size: 1000, status: 'active' });
+      const suppliers = data.data || [];
+      const select = document.getElementById('f-supplier');
+      select.innerHTML = '<option value="">Chọn nhà cung cấp</option>' + suppliers.map(supplier => `
+        <option value="${supplier.id}">${utils.escapeHtml(supplier.name)}</option>`).join('');
+    }
+
+    function goodsOptionsHtml() {
+      return '<option value="">Chọn hàng hóa</option>' + goodsOptions.map(goods => `
+        <option value="${goods.id}" data-unit="${utils.escapeHtml(goods.unit)}" data-stock="${goods.quantity_on_hand}">
+          ${utils.escapeHtml(goods.name)}
+        </option>`).join('');
+    }
 
     async function loadReceipts(page = 1) {
       currentPage = page;
@@ -194,10 +217,11 @@
       detailModal.show();
       try {
         const r = await api.get(`/goods-receipts/${id}`);
+        if (!goodsOptions.length) await loadGoodsOptions();
         const itemsHtml = (r.items || []).map((it, i) => `
           <tr>
             <td>${i+1}</td>
-            <td>${it.goods_id}</td>
+            <td>${utils.escapeHtml(goodsOptions.find(g => String(g.id) === String(it.goods_id))?.name || 'Không xác định')}</td>
             <td>${utils.formatQty(it.quantity)}</td>
             <td>${utils.formatCurrency(it.unit_price)}</td>
             <td>${utils.formatCurrency(it.quantity * it.unit_price)}</td>
@@ -216,7 +240,7 @@
           </div>
           <div class="table-responsive">
             <table class="table table-sm table-bordered">
-              <thead class="table-light"><tr><th>#</th><th>Hàng hóa ID</th><th>SL nhập</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
+              <thead class="table-light"><tr><th>#</th><th>Hàng hóa</th><th>SL nhập</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead>
               <tbody>${itemsHtml}</tbody>
             </table>
           </div>`;
@@ -229,25 +253,40 @@
       const tbody = document.getElementById('items-tbody');
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="number" class="form-control form-control-sm" name="goods_id" min="1" placeholder="ID hàng hóa"/></td>
-        <td><input type="number" class="form-control form-control-sm" name="qty" min="0.001" step="any" value="1" placeholder="Số lượng"/></td>
+        <td><select class="form-select form-select-sm" name="goods_id">${goodsOptionsHtml()}</select></td>
+        <td><div class="issue-quantity-control"><input type="number" class="form-control form-control-sm" name="qty" min="0.001" step="any" value="1" placeholder="Số lượng"/><span class="issue-stock-hint">Đang có: —</span></div></td>
         <td><input type="number" class="form-control form-control-sm" name="price" min="0" step="any" value="0" placeholder="Đơn giá"/></td>
         <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">
           <i class="bi bi-trash"></i></button></td>`;
       tbody.appendChild(tr);
     }
 
+    document.getElementById('items-tbody').addEventListener('change', event => {
+      if (event.target.name !== 'goods_id') return;
+      const option = event.target.selectedOptions[0];
+      const hint = event.target.closest('tr').querySelector('.issue-stock-hint');
+      hint.textContent = option.value ? `Đang có: ${utils.formatQty(option.dataset.stock)} ${option.dataset.unit}` : 'Đang có: —';
+    });
+
     document.getElementById('btn-add-item').addEventListener('click', addItemRow);
 
-    document.getElementById('btn-add').addEventListener('click', () => {
+    document.getElementById('btn-add').addEventListener('click', async () => {
       document.getElementById('f-supplier').value = '';
       document.getElementById('f-po').value = '';
       document.getElementById('f-date').value = new Date().toISOString().slice(0, 16);
       document.getElementById('f-note').value = '';
       document.getElementById('items-tbody').innerHTML = '';
       document.getElementById('form-error').classList.add('d-none');
-      addItemRow();
-      receiptModal.show();
+      try {
+        await Promise.all([loadGoodsOptions(), loadSupplierOptions()]);
+        addItemRow();
+        receiptModal.show();
+      } catch (err) {
+        const errDiv = document.getElementById('form-error');
+        errDiv.textContent = 'Không thể tải danh sách hàng hóa: ' + err.message;
+        errDiv.classList.remove('d-none');
+        receiptModal.show();
+      }
     });
 
     document.getElementById('btn-save').addEventListener('click', async () => {
@@ -259,7 +298,7 @@
       errDiv.classList.add('d-none');
 
       if (!supplierId || !date) {
-        errDiv.textContent = 'Vui lòng nhập ID Nhà cung cấp và Ngày nhận hàng.';
+        errDiv.textContent = 'Vui lòng chọn nhà cung cấp và nhập Ngày nhận hàng.';
         errDiv.classList.remove('d-none');
         return;
       }
@@ -277,7 +316,7 @@
         const qty      = parseFloat(row.querySelector('[name=qty]').value);
         const price    = parseFloat(row.querySelector('[name=price]').value);
         if (!goods_id || isNaN(qty) || qty <= 0) {
-          errDiv.textContent = 'Mỗi dòng phải có ID hàng hóa và số lượng > 0.';
+          errDiv.textContent = 'Mỗi dòng phải chọn hàng hóa và có số lượng > 0.';
           errDiv.classList.remove('d-none');
           return;
         }

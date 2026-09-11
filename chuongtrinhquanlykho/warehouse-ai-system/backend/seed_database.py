@@ -91,36 +91,63 @@ def seed_database():
         suppliers = [
             Supplier(
                 id=1,
-                name='Công ty TNHH Phụ Tùng Thiên Long',
+                name='Công ty TNHH Nguyên Liệu Nhựa Việt',
                 contact_person='Phạm Minh Đức',
                 phone='0901234567',
-                email='duc.pham@thienlong.vn',
+                email='duc.pham@nguyenlieunhua.vn',
                 address='123 Đường Lý Thường Kiệt, Q.10, TP.HCM',
                 tax_code='0312345678',
                 status='active',
-                notes='NCC ưu tiên cho linh kiện điện tử',
+                notes='Nhà cung cấp nguyên liệu thô: hạt nhựa và phụ gia sản xuất',
             ),
             Supplier(
                 id=2,
-                name='HTX Sản Xuất Văn Phòng Phẩm Bình Dương',
+                name='Công ty CP Kim Loại Công Nghiệp Đông Nam',
                 contact_person='Nguyễn Thị Hoa',
                 phone='0912345678',
-                email='hoa.nt@vppbinhduong.vn',
+                email='hoa.nt@kimloaidongnam.vn',
                 address='45 Đường Trần Phú, TX.Thủ Dầu Một, Bình Dương',
                 tax_code='3702345678',
                 status='active',
-                notes='Chuyên cung cấp văn phòng phẩm, giao hàng mỗi thứ 2',
+                notes='Nhà cung cấp nguyên liệu thô: thép cuộn và nhôm tấm',
             ),
             Supplier(
                 id=3,
-                name='Công ty CP Thiết Bị Bảo Hộ An Toàn Việt',
+                name='Công ty TNHH Hóa Chất Sản Xuất Minh Phát',
                 contact_person='Trần Quốc Hùng',
                 phone='0987654321',
-                email='hung.tq@baohoanviet.vn',
+                email='hung.tq@minhphatchem.vn',
                 address='789 Đường Cộng Hòa, Q.Tân Bình, TP.HCM',
                 tax_code='0312987654',
-                status='inactive',
-                notes='Tạm ngừng hợp tác từ 2026-06 do giao hàng chậm',
+                status='active',
+                notes='Nhà cung cấp nguyên liệu thô: dung môi và hóa chất phụ trợ',
+            ),
+            Supplier(
+                id=4,
+                name='Công ty TNHH Linh Kiện Bán Thành Phẩm Á Châu',
+                contact_person='Đỗ Văn Nam', phone='0938123456',
+                email='nam@linhkienachau.vn',
+                address='18 Đường Tân Tạo, Q.Bình Tân, TP.HCM', tax_code='0313456789',
+                status='active',
+                notes='Nhà cung cấp bán thành phẩm: cụm mạch và module điều khiển',
+            ),
+            Supplier(
+                id=5,
+                name='Công ty CP Cơ Khí Bán Thành Phẩm Việt Thành',
+                contact_person='Võ Thị Lan', phone='0949234567',
+                email='lan@vietthanhco.vn',
+                address='66 Đường Nguyễn Văn Linh, Q.7, TP.HCM', tax_code='0314567890',
+                status='active',
+                notes='Nhà cung cấp bán thành phẩm: khung và vỏ cơ khí gia công sẵn',
+            ),
+            Supplier(
+                id=6,
+                name='Công ty TNHH Sản Phẩm Hoàn Thiện Thành Công',
+                contact_person='Nguyễn Quốc Bảo', phone='0958345678',
+                email='bao@thanhcong.vn',
+                address='25 Đường Võ Văn Kiệt, Q.1, TP.HCM', tax_code='0315678901',
+                status='active',
+                notes='Nhà cung cấp thành phẩm: thiết bị hoàn thiện và hàng đóng gói sẵn',
             ),
         ]
         db.session.add_all(suppliers)
@@ -130,9 +157,9 @@ def seed_database():
         # Step 5: Insert categories
         print("4️⃣  Inserting categories...")
         categories = [
-            Category(id=1, name='Linh kiện điện tử'),
-            Category(id=2, name='Văn phòng phẩm'),
-            Category(id=3, name='Thiết bị bảo hộ'),
+            Category(id=1, name='Nguyên liệu thô'),
+            Category(id=2, name='Bán thành phẩm'),
+            Category(id=3, name='Thành phẩm'),
         ]
         db.session.add_all(categories)
         db.session.commit()
@@ -141,30 +168,42 @@ def seed_database():
         # Step 6: Insert goods
         print("5️⃣  Inserting goods...")
         goods_list = [
-            Goods(id=1, sku='SKU001', name='Tụ điện 100μF 25V', category_id=1, preferred_supplier_id=1, 
-                  unit='Cái', min_stock=20, max_stock=200, quantity_on_hand=5, selling_price=15000.00,
-                  description='Tụ điện hóa học loại tốt, chịu được 25V'),
-            Goods(id=2, sku='SKU002', name='Điện trở 1K 1/4W', category_id=1, preferred_supplier_id=1,
-                  unit='Cái', min_stock=10, max_stock=500, quantity_on_hand=12, selling_price=1500.00,
-                  description='Điện trở film mỏng chính xác'),
-            Goods(id=3, sku='SKU003', name='Led xanh 5mm', category_id=1, preferred_supplier_id=1,
-                  unit='Cái', min_stock=15, max_stock=1000, quantity_on_hand=3, selling_price=2000.00,
-                  description='Led xanh độ sáng cao'),
-            Goods(id=4, sku='SKU004', name='Bút chì HB', category_id=2, preferred_supplier_id=2,
-                  unit='Cái', min_stock=50, max_stock=40, quantity_on_hand=50, selling_price=3000.00,
-                  description='Bút chì gỗ chất lượng tốt'),
-            Goods(id=5, sku='SKU005', name='Giấy A4 80gsm', category_id=2, preferred_supplier_id=2,
-                  unit='Ream', min_stock=20, max_stock=100, quantity_on_hand=25, selling_price=80000.00,
-                  description='Giấy in trắng tiêu chuẩn A4'),
-            Goods(id=6, sku='SKU006', name='Mực in đen HP', category_id=2, preferred_supplier_id=2,
-                  unit='Hộp', min_stock=10, max_stock=50, quantity_on_hand=8, selling_price=150000.00,
-                  description='Mực in laser màu đen'),
-            Goods(id=7, sku='SKU007', name='Mũ bảo hộ', category_id=3, preferred_supplier_id=3,
-                  unit='Cái', min_stock=5, max_stock=50, quantity_on_hand=0, selling_price=50000.00,
-                  description='Mũ bảo hộ lao động tiêu chuẩn'),
-            Goods(id=8, sku='SKU008', name='Găng tay cao su', category_id=3, preferred_supplier_id=3,
-                  unit='Hộp', min_stock=10, max_stock=150, quantity_on_hand=200, selling_price=80000.00,
-                  description='Găng tay cao su chống hóa chất'),
+            Goods(id=1, sku='NL001', name='Hạt nhựa PP nguyên sinh', category_id=1, preferred_supplier_id=1,
+                unit='Kg', min_stock=20, max_stock=200, quantity_on_hand=5, selling_price=42000.00,
+                description='Nguyên liệu thô dùng ép vỏ và chi tiết nhựa'),
+            Goods(id=2, sku='NL002', name='Phụ gia chống UV cho nhựa', category_id=1, preferred_supplier_id=1,
+                unit='Kg', min_stock=10, max_stock=100, quantity_on_hand=12, selling_price=68000.00,
+                description='Phụ gia nguyên liệu thô tăng độ bền màu sản phẩm'),
+            Goods(id=3, sku='NL003', name='Thép cuộn cán nguội', category_id=1, preferred_supplier_id=2,
+                unit='Kg', min_stock=15, max_stock=80, quantity_on_hand=3, selling_price=26500.00,
+                description='Nguyên liệu thô cho gia công khung và vỏ cơ khí'),
+            Goods(id=4, sku='NL004', name='Nhôm tấm 2mm', category_id=1, preferred_supplier_id=2,
+                unit='Tấm', min_stock=10, max_stock=40, quantity_on_hand=16, selling_price=185000.00,
+                description='Nguyên liệu thô dùng gia công mặt dựng thiết bị'),
+            Goods(id=5, sku='NL005', name='Dung môi công nghiệp IPA', category_id=1, preferred_supplier_id=3,
+                unit='Can', min_stock=20, max_stock=100, quantity_on_hand=25, selling_price=95000.00,
+                description='Dung môi nguyên liệu thô dùng vệ sinh bề mặt'),
+            Goods(id=6, sku='NL006', name='Chất đóng rắn epoxy', category_id=1, preferred_supplier_id=3,
+                unit='Kg', min_stock=10, max_stock=50, quantity_on_hand=8, selling_price=145000.00,
+                description='Hóa chất nguyên liệu thô dùng phối trộn keo epoxy'),
+            Goods(id=7, sku='BTP001', name='Cụm mạch điều khiển nguồn', category_id=2, preferred_supplier_id=4,
+                unit='Bộ', min_stock=5, max_stock=30, quantity_on_hand=0, selling_price=320000.00,
+                description='Bán thành phẩm đã lắp linh kiện và kiểm tra chức năng'),
+            Goods(id=8, sku='BTP002', name='Module hiển thị LCD 16x2', category_id=2, preferred_supplier_id=4,
+                unit='Bộ', min_stock=10, max_stock=40, quantity_on_hand=16, selling_price=98000.00,
+                description='Bán thành phẩm hiển thị dùng cho thiết bị hoàn chỉnh'),
+            Goods(id=9, sku='BTP003', name='Khung thép sơn tĩnh điện', category_id=2, preferred_supplier_id=5,
+                unit='Cái', min_stock=10, max_stock=40, quantity_on_hand=16, selling_price=285000.00,
+                description='Bán thành phẩm cơ khí đã gia công và sơn hoàn thiện'),
+            Goods(id=10, sku='BTP004', name='Vỏ nhôm gia công CNC', category_id=2, preferred_supplier_id=5,
+                unit='Cái', min_stock=10, max_stock=50, quantity_on_hand=8, selling_price=410000.00,
+                description='Bán thành phẩm vỏ nhôm đã cắt và xử lý bề mặt'),
+            Goods(id=11, sku='TP001', name='Bộ điều khiển đóng gói hoàn chỉnh', category_id=3, preferred_supplier_id=6,
+                unit='Bộ', min_stock=5, max_stock=30, quantity_on_hand=9, selling_price=1250000.00,
+                description='Thành phẩm đã lắp ráp, kiểm thử và đóng gói'),
+            Goods(id=12, sku='TP002', name='Thiết bị giám sát nhiệt độ', category_id=3, preferred_supplier_id=6,
+                unit='Cái', min_stock=5, max_stock=25, quantity_on_hand=4, selling_price=890000.00,
+                description='Thành phẩm sẵn sàng giao cho khách hàng'),
         ]
         db.session.add_all(goods_list)
         db.session.commit()
@@ -178,7 +217,7 @@ def seed_database():
                           order_date=datetime(2026, 8, 27, 8, 30),
                           status='chờ xác nhận', created_at=datetime(2026, 8, 27, 8, 30),
                           updated_at=datetime(2026, 8, 27, 8, 30)),
-            PurchaseOrder(id=2, supplier_id=2, created_by=2,
+            PurchaseOrder(id=2, supplier_id=3, created_by=2,
                           order_date=datetime(2026, 8, 26, 14, 0),
                           status='đang giao', created_at=datetime(2026, 8, 26, 14, 0),
                           updated_at=datetime(2026, 8, 26, 14, 0)),
@@ -191,9 +230,9 @@ def seed_database():
         db.session.flush()
         db.session.add_all([
             PurchaseOrderItem(po_id=1, goods_id=1, quantity_ordered=100, unit_price=2200),
-            PurchaseOrderItem(po_id=1, goods_id=3, quantity_ordered=30, unit_price=115000),
-            PurchaseOrderItem(po_id=2, goods_id=5, quantity_ordered=40, unit_price=76000),
-            PurchaseOrderItem(po_id=2, goods_id=6, quantity_ordered=20, unit_price=165000),
+            PurchaseOrderItem(po_id=1, goods_id=2, quantity_ordered=30, unit_price=68000),
+            PurchaseOrderItem(po_id=2, goods_id=5, quantity_ordered=40, unit_price=95000),
+            PurchaseOrderItem(po_id=2, goods_id=6, quantity_ordered=20, unit_price=145000),
             PurchaseOrderItem(po_id=3, goods_id=2, quantity_ordered=100, unit_price=1200),
         ])
 
@@ -203,9 +242,9 @@ def seed_database():
                          note='Đã nhận đủ theo đơn đặt hàng PO-003',
                          created_at=datetime(2026, 8, 22, 15, 30),
                          updated_at=datetime(2026, 8, 22, 15, 30)),
-            GoodsReceipt(id=2, supplier_id=2, po_id=2, created_by=3,
+            GoodsReceipt(id=2, supplier_id=3, po_id=2, created_by=3,
                          received_date=today,
-                         note='Nhận đợt 1, còn thiếu một phần mực in',
+                         note='Nhận đợt 1, còn thiếu một phần hóa chất',
                          created_at=today, updated_at=today),
             GoodsReceipt(id=3, supplier_id=1, po_id=None, created_by=3,
                          received_date=datetime(2026, 8, 27, 11, 15),
@@ -217,8 +256,8 @@ def seed_database():
         db.session.flush()
         db.session.add_all([
             GoodsReceiptItem(receipt_id=1, goods_id=2, quantity=100, unit_price=1200),
-            GoodsReceiptItem(receipt_id=2, goods_id=5, quantity=25, unit_price=76000),
-            GoodsReceiptItem(receipt_id=2, goods_id=6, quantity=10, unit_price=165000),
+            GoodsReceiptItem(receipt_id=2, goods_id=5, quantity=25, unit_price=95000),
+            GoodsReceiptItem(receipt_id=2, goods_id=6, quantity=10, unit_price=145000),
             GoodsReceiptItem(receipt_id=3, goods_id=1, quantity=20, unit_price=2200),
         ])
 
@@ -274,7 +313,7 @@ def seed_database():
                             issue_date=datetime(2026, 8, 22), total_amount=120000,
                             payment_status='đã thanh toán', created_at=datetime(2026, 8, 22),
                             updated_at=datetime(2026, 8, 23)),
-            SupplierInvoice(id=2, supplier_id=2, receipt_id=2, invoice_number='INV-BD-0827',
+            SupplierInvoice(id=2, supplier_id=3, receipt_id=2, invoice_number='INV-MP-0827',
                             issue_date=datetime(2026, 8, 27), total_amount=3550000,
                             payment_status='thanh toán một phần', created_at=today, updated_at=today),
         ]
@@ -314,8 +353,11 @@ def seed_database():
             issue_id = 3 + offset
             stocktake_id = 2 + offset
             invoice_id = 2 + offset
-            goods_id = (offset % 8) + 1
-            supplier_id = 1 if offset % 2 else 2
+            goods_id = ((offset - 1) % 12) + 1
+            supplier_id = {
+                1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3,
+                7: 4, 8: 4, 9: 5, 10: 5, 11: 6, 12: 6,
+            }[goods_id]
             status = order_statuses[(offset - 1) % len(order_statuses)]
 
             extra_orders.append(PurchaseOrder(

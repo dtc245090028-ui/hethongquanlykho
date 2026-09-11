@@ -97,7 +97,7 @@
                 <input type="text" id="f-name" class="form-control" placeholder="Tên sản phẩm" required/>
               </div>
               <div class="col-md-4">
-                <label class="form-label required">Danh mục (ID)</label>
+                <label class="form-label required">Danh mục</label>
                 <select id="f-category" class="form-select" required>
                   <option value="">Đang tải danh mục...</option>
                 </select>
@@ -107,7 +107,7 @@
                 <input type="text" id="f-unit" class="form-control" placeholder="Cái / Hộp / kg..." required/>
               </div>
               <div class="col-md-4">
-                <label class="form-label">NCC ưu tiên (ID)</label>
+                <label class="form-label">NCC ưu tiên</label>
                 <select id="f-supplier" class="form-select">
                   <option value="">Đang tải nhà cung cấp...</option>
                 </select>
@@ -189,7 +189,7 @@
         const result = await api.get('/suppliers', { page: 1, page_size: 100 });
         const suppliers = result.data || [];
         select.innerHTML = '<option value="">Không chọn NCC ưu tiên</option>' + suppliers.map(s => `
-          <option value="${s.id}">${s.id} — ${utils.escapeHtml(s.name)}${s.status === 'inactive' ? ' (Ngừng hoạt động)' : ''}</option>
+          <option value="${s.id}">${utils.escapeHtml(s.name)}${s.status === 'inactive' ? ' (Ngừng hoạt động)' : ''}</option>
         `).join('');
         select.value = selectedId ? String(selectedId) : '';
       } catch (err) {
@@ -206,7 +206,7 @@
         const result = await api.get('/categories');
         const categories = result.data || [];
         select.innerHTML = '<option value="">Chọn danh mục</option>' + categories.map(category => `
-          <option value="${category.id}">${category.id} — ${utils.escapeHtml(category.name)}</option>
+          <option value="${category.id}">${utils.escapeHtml(category.name)}</option>
         `).join('');
         select.value = selectedId ? String(selectedId) : '';
       } catch (err) {

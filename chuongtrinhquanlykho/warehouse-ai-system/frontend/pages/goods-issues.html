@@ -55,7 +55,7 @@
 
   <!-- Modal Lập phiếu xuất -->
   <div class="modal fade" id="issue-modal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl issue-modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Lập phiếu xuất kho</h5>
@@ -83,14 +83,10 @@
           <div class="table-responsive">
             <table class="table table-bordered table-sm">
               <thead class="table-light">
-                <tr><th>ID Hàng hóa</th><th>Số lượng xuất</th><th style="width:50px"></th></tr>
+                <tr><th>Hàng hóa</th><th>Số lượng xuất</th><th style="width:50px"></th></tr>
               </thead>
               <tbody id="items-tbody"></tbody>
             </table>
-          </div>
-          <div class="alert alert-warning py-2 small mt-2">
-            <i class="bi bi-exclamation-triangle me-1"></i>
-            Hệ thống sẽ tự động kiểm tra tồn kho. Không thể xuất vượt quá số lượng hiện có.
           </div>
         </div>
         <div class="modal-footer">
@@ -128,8 +124,31 @@
     /* ========= Phiếu xuất kho ========= */
     let currentPage = 1;
     const PAGE_SIZE = 20;
+    let goodsOptions = [];
     const issueModal  = new bootstrap.Modal(document.getElementById('issue-modal'));
     const detailModal = new bootstrap.Modal(document.getElementById('detail-modal'));
+
+    async function loadGoodsOptions() {
+      const data = await api.get('/goods', { page: 1, page_size: 1000, status: 'active' });
+      goodsOptions = data.data || [];
+    }
+
+    function getGoodsName(goodsId) {
+      const goods = goodsOptions.find(item => String(item.id) === String(goodsId));
+      return goods ? goods.name : 'Hàng hóa không còn kinh doanh';
+    }
+
+    function renderGoodsOptions(selectedId = '') {
+      if (!goodsOptions.length) {
+        return '<div class="goods-picker-empty">Không có hàng hóa đang kinh doanh</div>';
+      }
+      return goodsOptions.map(goods => `
+        <button type="button" class="goods-picker-option${String(goods.id) === String(selectedId) ? ' is-selected' : ''}"
+          data-goods-id="${goods.id}" data-goods-name="${utils.escapeHtml(goods.name)}"
+          data-quantity-on-hand="${goods.quantity_on_hand}" data-unit="${utils.escapeHtml(goods.unit)}">
+          ${utils.escapeHtml(goods.name)}
+        </button>`).join('');
+    }
 
     async function loadIssues(page = 1) {
       currentPage = page;
@@ -175,9 +194,10 @@
       document.getElementById('detail-title').textContent = `Phiếu xuất #${id}`;
       detailModal.show();
       try {
+        if (!goodsOptions.length) await loadGoodsOptions();
         const r = await api.get(`/goods-issues/${id}`);
         const itemsHtml = (r.items || []).map((it, i) => `
-          <tr><td>${i+1}</td><td>${it.goods_id}</td><td>${utils.formatQty(it.quantity)}</td></tr>`).join('');
+          <tr><td>${i+1}</td><td>${utils.escapeHtml(getGoodsName(it.goods_id))}</td><td>${utils.formatQty(it.quantity)}</td></tr>`).join('');
         document.getElementById('detail-body').innerHTML = `
           <table class="table table-borderless mb-3 small">
             <tr><th>Ngày xuất:</th><td>${utils.formatDateTime(r.issued_date)}</td></tr>
@@ -186,7 +206,7 @@
           </table>
           <div class="table-responsive">
             <table class="table table-sm table-bordered">
-              <thead class="table-light"><tr><th>#</th><th>Hàng hóa ID</th><th>Số lượng xuất</th></tr></thead>
+              <thead class="table-light"><tr><th>#</th><th>Hàng hóa</th><th>Số lượng xuất</th></tr></thead>
               <tbody>${itemsHtml}</tbody>
             </table>
           </div>`;
@@ -198,22 +218,77 @@
     function addItemRow() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><input type="number" class="form-control form-control-sm" name="goods_id" min="1" placeholder="ID hàng hóa"/></td>
-        <td><input type="number" class="form-control form-control-sm" name="qty" min="0.001" step="any" value="1" placeholder="Số lượng xuất"/></td>
+        <td>
+          <div class="goods-picker">
+            <input type="hidden" name="goods_id" value=""/>
+            <button type="button" class="goods-picker-trigger" aria-expanded="false">
+              <span class="goods-picker-label">Chọn hàng hóa</span>
+              <i class="bi bi-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="goods-picker-menu" role="listbox">${renderGoodsOptions()}</div>
+          </div>
+        </td>
+        <td>
+          <div class="issue-quantity-control">
+            <input type="number" class="form-control form-control-sm" name="qty" min="0.001" step="any" value="1" placeholder="Số lượng xuất"/>
+            <span class="issue-stock-hint" aria-live="polite">Đang có: —</span>
+          </div>
+        </td>
         <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">
           <i class="bi bi-trash"></i></button></td>`;
       document.getElementById('items-tbody').appendChild(tr);
     }
 
+    document.getElementById('items-tbody').addEventListener('click', event => {
+      const trigger = event.target.closest('.goods-picker-trigger');
+      if (trigger) {
+        const picker = trigger.closest('.goods-picker');
+        document.querySelectorAll('.goods-picker.is-open').forEach(openPicker => {
+          if (openPicker !== picker) openPicker.classList.remove('is-open');
+        });
+        picker.classList.toggle('is-open');
+        trigger.setAttribute('aria-expanded', picker.classList.contains('is-open'));
+        return;
+      }
+
+      const option = event.target.closest('.goods-picker-option');
+      if (option) {
+        const picker = option.closest('.goods-picker');
+        picker.querySelector('[name=goods_id]').value = option.dataset.goodsId;
+        picker.querySelector('.goods-picker-label').textContent = option.dataset.goodsName;
+        const row = picker.closest('tr');
+        row.querySelector('.issue-stock-hint').textContent =
+          `Đang có: ${utils.formatQty(option.dataset.quantityOnHand)} ${option.dataset.unit}`;
+        picker.querySelectorAll('.goods-picker-option').forEach(item => item.classList.remove('is-selected'));
+        option.classList.add('is-selected');
+        picker.classList.remove('is-open');
+        picker.querySelector('.goods-picker-trigger').setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.goods-picker')) {
+        document.querySelectorAll('.goods-picker.is-open').forEach(picker => picker.classList.remove('is-open'));
+      }
+    });
+
     document.getElementById('btn-add-item').addEventListener('click', addItemRow);
 
-    document.getElementById('btn-add').addEventListener('click', () => {
+    document.getElementById('btn-add').addEventListener('click', async () => {
       document.getElementById('f-date').value = new Date().toISOString().slice(0, 16);
       document.getElementById('f-note').value = '';
       document.getElementById('items-tbody').innerHTML = '';
       document.getElementById('form-error').classList.add('d-none');
-      addItemRow();
-      issueModal.show();
+      try {
+        await loadGoodsOptions();
+        addItemRow();
+        issueModal.show();
+      } catch (err) {
+        const errDiv = document.getElementById('form-error');
+        errDiv.textContent = 'Không thể tải danh sách hàng hóa: ' + err.message;
+        errDiv.classList.remove('d-none');
+        issueModal.show();
+      }
     });
 
     document.getElementById('btn-save').addEventListener('click', async () => {
@@ -240,7 +315,7 @@
         const goods_id = row.querySelector('[name=goods_id]').value;
         const qty      = parseFloat(row.querySelector('[name=qty]').value);
         if (!goods_id || isNaN(qty) || qty <= 0) {
-          errDiv.textContent = 'Mỗi dòng phải có ID hàng hóa và số lượng > 0.';
+          errDiv.textContent = 'Mỗi dòng phải chọn hàng hóa và có số lượng > 0.';
           errDiv.classList.remove('d-none');
           return;
         }
