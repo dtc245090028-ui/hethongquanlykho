@@ -8,8 +8,8 @@ Triển khai 3 endpoint theo api_contract.md mục 6:
   GET    /api/goods-issues/{id}     Chi tiết phiếu xuất
 
 Role cho phép:
-  - GET (danh sách + chi tiết): warehouse_keeper, warehouse_manager
-  - POST (lập phiếu):           warehouse_keeper
+    - GET (danh sách + chi tiết): admin, warehouse_keeper, warehouse_manager
+    - POST (lập phiếu):           admin, warehouse_keeper
 
 Ràng buộc nghiệp vụ cốt lõi (Prompt.md mục 3.3, 10):
   1. quantity > 0 cho mọi dòng items.
@@ -33,6 +33,127 @@ from app.auth.decorators import roles_required
 goods_issues_bp = Blueprint(
     "goods_issues", __name__, url_prefix="/api/goods-issues"
 )
+
+
+class GoodsIssueError(Exception):
+    """Lỗi nghiệp vụ khi lập phiếu xuất kho."""
+
+    def __init__(self, error_code: str, message: str, status_code: int = 400):
+        super().__init__(message)
+        self.error_code = error_code
+        self.message = message
+        self.status_code = status_code
+
+
+def create_goods_issue_transaction(
+    user_id: int,
+    items_data: list[dict],
+    issued_date: datetime,
+    note: str | None = None,
+    commit: bool = True,
+) -> GoodsIssue:
+    """Tạo phiếu xuất và trừ tồn trong cùng một transaction.
+
+    Hàm này được dùng cho cả phiếu xuất tạo thủ công và phiếu xuất tự động
+    khi đơn đặt hàng chuyển sang trạng thái ``đã nhận``.
+    """
+    if not items_data:
+        raise GoodsIssueError(
+            "MISSING_FIELDS",
+            "Phiếu xuất phải có ít nhất 1 dòng hàng hóa (items)",
+        )
+
+    goods_map: dict[int, Goods] = {}
+    normalized_items: list[tuple[int, float]] = []
+    quantity_total_per_goods: dict[int, float] = {}
+
+    for idx, item in enumerate(items_data, start=1):
+        goods_id = item.get("goods_id")
+        quantity = item.get("quantity")
+        if goods_id is None:
+            raise GoodsIssueError("MISSING_FIELDS", f"Dòng {idx}: thiếu goods_id")
+
+        try:
+            goods_id = int(goods_id)
+            quantity = float(quantity)
+        except (TypeError, ValueError):
+            raise GoodsIssueError(
+                "INVALID_QUANTITY",
+                f"Dòng {idx}: số lượng xuất phải lớn hơn 0",
+            )
+
+        if quantity <= 0:
+            raise GoodsIssueError(
+                "INVALID_QUANTITY",
+                f"Dòng {idx}: số lượng xuất phải lớn hơn 0",
+            )
+
+        if goods_id not in goods_map:
+            goods = db.session.get(Goods, goods_id)
+            if not goods:
+                raise GoodsIssueError(
+                    "GOODS_NOT_FOUND",
+                    f"Dòng {idx}: không tìm thấy hàng hóa ID {goods_id}",
+                    404,
+                )
+            if goods.status == "inactive":
+                raise GoodsIssueError(
+                    "GOODS_INACTIVE",
+                    f"Dòng {idx}: hàng hóa '{goods.name}' đã ngừng kinh doanh",
+                )
+            goods_map[goods_id] = goods
+            quantity_total_per_goods[goods_id] = 0.0
+
+        normalized_items.append((goods_id, quantity))
+        quantity_total_per_goods[goods_id] += quantity
+
+    for goods_id, total_quantity in quantity_total_per_goods.items():
+        goods = goods_map[goods_id]
+        if total_quantity > goods.quantity_on_hand:
+            raise GoodsIssueError(
+                "INSUFFICIENT_STOCK",
+                (
+                    f"Hàng hóa '{goods.name}' (SKU: {goods.sku}): số lượng xuất "
+                    f"yêu cầu ({total_quantity} {goods.unit}) vượt quá tồn kho "
+                    f"hiện tại ({goods.quantity_on_hand} {goods.unit})"
+                ),
+            )
+
+    try:
+        issue = GoodsIssue(
+            created_by=user_id,
+            issued_date=issued_date,
+            note=note,
+        )
+        db.session.add(issue)
+        db.session.flush()
+
+        for goods_id, quantity in normalized_items:
+            db.session.add(GoodsIssueItem(
+                issue_id=issue.id,
+                goods_id=goods_id,
+                quantity=quantity,
+            ))
+            goods_map[goods_id].quantity_on_hand -= quantity
+            if goods_map[goods_id].quantity_on_hand < 0:
+                raise GoodsIssueError(
+                    "INSUFFICIENT_STOCK",
+                    f"Tồn kho không đủ cho hàng hóa ID {goods_id}",
+                )
+
+        if commit:
+            db.session.commit()
+        return issue
+    except GoodsIssueError:
+        db.session.rollback()
+        raise
+    except Exception:
+        db.session.rollback()
+        raise GoodsIssueError(
+            "INTERNAL_SERVER_ERROR",
+            "Lỗi khi lưu phiếu xuất. Vui lòng thử lại.",
+            500,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +227,7 @@ def get_goods_issues():
 # ---------------------------------------------------------------------------
 @goods_issues_bp.route("", methods=["POST"])
 @jwt_required()
-@roles_required("warehouse_keeper")
+@roles_required("admin", "warehouse_keeper")
 def create_goods_issue():
     """
     Lập phiếu xuất kho — trừ tồn kho theo transaction.
@@ -141,21 +262,10 @@ def create_goods_issue():
             "message": "Body request không phải JSON hợp lệ"
         }), 400
 
-    # ---- Validate trường bắt buộc ----
-    items_data = data.get("items", [])
-
-    if not items_data:
-        return jsonify({
-            "error_code": "MISSING_FIELDS",
-            "message": "Phiếu xuất phải có ít nhất 1 dòng hàng hóa (items)"
-        }), 400
-
-    # ---- Parse issued_date ----
-    issued_date_str = data.get("issued_date")
     issued_date = datetime.now(timezone.utc).replace(tzinfo=None)
+    issued_date_str = data.get("issued_date")
     if issued_date_str:
         try:
-            # Hỗ trợ cả "Z" (UTC) và "+HH:MM"
             issued_date = datetime.fromisoformat(
                 issued_date_str.replace("Z", "+00:00")
             ).replace(tzinfo=None)
@@ -165,126 +275,19 @@ def create_goods_issue():
                 "message": "issued_date phải theo chuẩn ISO 8601 (ví dụ: 2026-08-14T08:00:00Z)"
             }), 400
 
-    # ---- Validate từng dòng items ----
-    # Dùng dict để tra cứu nhanh goods theo id (tránh query lặp)
-    # Đồng thời kiểm tra tổng số lượng xuất cho từng mặt hàng
-    # (đề phòng cùng goods_id xuất hiện 2 lần trong cùng 1 phiếu)
-    goods_map: dict[int, Goods] = {}
-    quantity_total_per_goods: dict[int, float] = {}  # tổng quantity cho mỗi goods_id trong phiếu này
-
-    for idx, item in enumerate(items_data, start=1):
-        goods_id = item.get("goods_id")
-        quantity = item.get("quantity")
-
-        # Kiểm tra goods_id
-        if goods_id is None:
-            return jsonify({
-                "error_code": "MISSING_FIELDS",
-                "message": f"Dòng {idx}: thiếu goods_id"
-            }), 400
-
-        # Kiểm tra quantity > 0 (Prompt.md mục 10 — ca lỗi/biên)
-        if quantity is None or float(quantity) <= 0:
-            return jsonify({
-                "error_code": "INVALID_QUANTITY",
-                "message": f"Dòng {idx}: số lượng xuất phải lớn hơn 0"
-            }), 400
-
-        # Kiểm tra hàng hóa tồn tại và active
-        if goods_id not in goods_map:
-            goods = db.session.get(Goods, goods_id)
-            if not goods:
-                return jsonify({
-                    "error_code": "GOODS_NOT_FOUND",
-                    "message": f"Dòng {idx}: không tìm thấy hàng hóa ID {goods_id}"
-                }), 404
-            if goods.status == "inactive":
-                return jsonify({
-                    "error_code": "GOODS_INACTIVE",
-                    "message": f"Dòng {idx}: hàng hóa '{goods.name}' đã ngừng kinh doanh"
-                }), 400
-            goods_map[goods_id] = goods
-            quantity_total_per_goods[goods_id] = 0.0
-
-        # Cộng dồn tổng quantity cho goods_id này (hỗ trợ nhiều dòng cùng goods_id)
-        quantity_total_per_goods[goods_id] += float(quantity)
-
-    # ---- Kiểm tra tổng xuất KHÔNG vượt tồn kho (chặn xuất âm) ----
-    # Phải kiểm tra TRƯỚC khi vào transaction để trả lỗi rõ ràng,
-    # tránh rollback giữa chừng mà không có thông báo chi tiết.
-    # (Prompt.md mục 3.3: "kiểm tra số lượng còn — không cho xuất vượt tồn")
-    for goods_id, total_qty in quantity_total_per_goods.items():
-        goods_obj = goods_map[goods_id]
-        if total_qty > goods_obj.quantity_on_hand:
-            return jsonify({
-                "error_code": "INSUFFICIENT_STOCK",
-                "message": (
-                    f"Hàng hóa '{goods_obj.name}' (SKU: {goods_obj.sku}): "
-                    f"số lượng xuất yêu cầu ({total_qty} {goods_obj.unit}) "
-                    f"vượt quá tồn kho hiện tại ({goods_obj.quantity_on_hand} {goods_obj.unit})"
-                )
-            }), 400
-
-    # ---- Tạo phiếu xuất + cập nhật tồn kho (transaction) ----
-    # Dùng try/except để đảm bảo rollback nếu có lỗi bất ngờ
-    user_id = int(get_jwt_identity())
     try:
-        issue = GoodsIssue(
-            created_by=user_id,
+        issue = create_goods_issue_transaction(
+            user_id=int(get_jwt_identity()),
+            items_data=data.get("items", []),
             issued_date=issued_date,
             note=data.get("note"),
         )
-        db.session.add(issue)
-        # flush() để SQLAlchemy gán issue.id mà chưa commit
-        # Cần issue.id để tạo GoodsIssueItem
-        db.session.flush()
-
-        for item in items_data:
-            goods_id = item["goods_id"]
-            quantity = float(item["quantity"])
-
-            # Tạo dòng chi tiết phiếu xuất
-            issue_item = GoodsIssueItem(
-                issue_id=issue.id,
-                goods_id=goods_id,
-                quantity=quantity,
-            )
-            db.session.add(issue_item)
-
-            # Trừ tồn kho — cập nhật trực tiếp cột quantity_on_hand
-            # Dùng đối tượng Goods đã load sẵn trong goods_map (tránh query lại)
-            # Ràng buộc không âm đã được kiểm tra ở bước trên,
-            # nhưng vẫn guard thêm một lần nữa để an toàn hoàn toàn
-            goods_obj = goods_map[goods_id]
-            goods_obj.quantity_on_hand -= quantity
-
-            # Guard cuối — không bao giờ cho tồn kho âm (defensive programming)
-            if goods_obj.quantity_on_hand < 0:
-                raise ValueError(
-                    f"Tồn kho không đủ cho hàng hóa ID {goods_id} "
-                    f"(tồn sau xuất = {goods_obj.quantity_on_hand})"
-                )
-
-        # Commit toàn bộ transaction một lần duy nhất
-        # → nếu thất bại, SQLAlchemy tự rollback toàn bộ (atomic)
-        db.session.commit()
-
-    except ValueError as ve:
-        # Trường hợp guard tồn kho âm phát hiện lỗi bất ngờ
-        db.session.rollback()
+    except GoodsIssueError as error:
         return jsonify({
-            "error_code": "INSUFFICIENT_STOCK",
-            "message": str(ve),
-        }), 400
+            "error_code": error.error_code,
+            "message": error.message,
+        }), error.status_code
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            "error_code": "INTERNAL_SERVER_ERROR",
-            "message": "Lỗi khi lưu phiếu xuất. Vui lòng thử lại.",
-        }), 500
-
-    # Trả về phiếu xuất vừa tạo (kèm items chi tiết)
     return jsonify(issue.to_dict(include_items=True)), 201
 
 
@@ -293,7 +296,7 @@ def create_goods_issue():
 # ---------------------------------------------------------------------------
 @goods_issues_bp.route("/<int:id>", methods=["GET"])
 @jwt_required()
-@roles_required("warehouse_keeper", "warehouse_manager")
+@roles_required("admin", "warehouse_keeper", "warehouse_manager")
 def get_goods_issue_detail(id):
     """
     Lấy chi tiết phiếu xuất theo ID, bao gồm mảng items đầy đủ.

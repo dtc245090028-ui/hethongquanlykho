@@ -120,7 +120,7 @@ def get_goods_receipts():
 # ---------------------------------------------------------------------------
 @goods_receipts_bp.route("", methods=["POST"])
 @jwt_required()
-@roles_required("warehouse_keeper")
+@roles_required("admin", "warehouse_keeper")
 def create_goods_receipt():
     """
     Lập phiếu nhập kho — cập nhật tồn kho theo transaction.
@@ -355,7 +355,7 @@ def create_goods_receipt():
 # ---------------------------------------------------------------------------
 @goods_receipts_bp.route("/<int:id>", methods=["GET"])
 @jwt_required()
-@roles_required("warehouse_keeper", "warehouse_manager")
+@roles_required("admin", "warehouse_keeper", "warehouse_manager")
 def get_goods_receipt_detail(id):
     """
     Lấy chi tiết phiếu nhập theo ID, bao gồm mảng items đầy đủ.

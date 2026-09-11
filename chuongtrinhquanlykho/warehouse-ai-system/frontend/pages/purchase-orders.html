@@ -74,8 +74,12 @@
           <div id="form-error" class="alert alert-danger d-none py-2"></div>
           <div class="row g-3 mb-3">
             <div class="col-md-4">
-              <label class="form-label required">ID Nhà cung cấp</label>
-              <input type="number" id="f-supplier" class="form-control" placeholder="ID nhà cung cấp" min="1" required/>
+              <label class="form-label required">Nhà cung cấp</label>
+              <input type="hidden" id="f-supplier"/>
+              <button type="button" id="f-supplier-display" class="form-control supplier-picker-trigger text-start" aria-controls="supplier-picker" aria-expanded="false">
+                <span class="text-muted">Chọn nhà cung cấp</span>
+                <i class="bi bi-chevron-right float-end mt-1" aria-hidden="true"></i>
+              </button>
             </div>
             <div class="col-md-4">
               <label class="form-label required">Ngày đặt hàng</label>
@@ -110,6 +114,22 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Thanh trượt chọn nhà cung cấp -->
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="supplier-picker" aria-labelledby="supplier-picker-title">
+    <div class="offcanvas-header">
+      <h5 class="offcanvas-title" id="supplier-picker-title">Chọn nhà cung cấp</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Đóng"></button>
+    </div>
+    <div class="offcanvas-body">
+      <div class="input-group mb-3">
+        <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+        <input type="search" id="supplier-search" class="form-control" placeholder="Tìm theo tên hoặc liên hệ..." autocomplete="off"/>
+      </div>
+      <div id="supplier-picker-status" class="small text-secondary mb-2"></div>
+      <div id="supplier-picker-list" class="supplier-picker-list" role="listbox" aria-label="Danh sách nhà cung cấp"></div>
     </div>
   </div>
 
@@ -167,13 +187,60 @@
     let currentPage = 1;
     const PAGE_SIZE = 20;
     let goodsOptions = [];
+    let supplierOptions = [];
     const poModal     = new bootstrap.Modal(document.getElementById('po-modal'));
     const detailModal = new bootstrap.Modal(document.getElementById('detail-modal'));
     const statusModal = new bootstrap.Modal(document.getElementById('status-modal'));
+    const supplierPicker = new bootstrap.Offcanvas(document.getElementById('supplier-picker'));
 
     async function loadGoodsOptions() {
       const data = await api.get('/goods', { page: 1, page_size: 1000, status: 'active' });
       goodsOptions = data.data || [];
+    }
+
+    async function loadSupplierOptions() {
+      const status = document.getElementById('supplier-picker-status');
+      const list = document.getElementById('supplier-picker-list');
+      status.textContent = 'Đang tải danh sách...';
+      list.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
+      try {
+        const data = await api.get('/suppliers', { page: 1, page_size: 1000, status: 'active' });
+        supplierOptions = data.data || [];
+        renderSupplierOptions();
+      } catch (err) {
+        status.textContent = 'Không thể tải danh sách nhà cung cấp.';
+        list.innerHTML = `<div class="text-danger small">${utils.escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function renderSupplierOptions() {
+      const keyword = document.getElementById('supplier-search').value.trim().toLowerCase();
+      const matches = supplierOptions.filter(supplier =>
+        [supplier.name, supplier.contact_person, supplier.phone, supplier.email]
+          .filter(Boolean)
+          .some(value => value.toLowerCase().includes(keyword))
+      );
+      document.getElementById('supplier-picker-status').textContent =
+        `${matches.length} nhà cung cấp${keyword ? ' phù hợp' : ''}`;
+      document.getElementById('supplier-picker-list').innerHTML = matches.length
+        ? matches.map(supplier => `
+          <button type="button" class="supplier-picker-option" role="option" data-supplier-id="${supplier.id}" data-supplier-name="${utils.escapeHtml(supplier.name)}">
+            <span class="supplier-picker-option-icon"><i class="bi bi-building" aria-hidden="true"></i></span>
+            <span class="supplier-picker-option-copy">
+              <strong>${utils.escapeHtml(supplier.name)}</strong>
+              <small>${utils.escapeHtml(supplier.contact_person || supplier.phone || supplier.email || `Mã NCC #${supplier.id}`)}</small>
+            </span>
+            <i class="bi bi-check2 supplier-picker-check" aria-hidden="true"></i>
+          </button>`).join('')
+        : '<div class="text-secondary small py-3">Không tìm thấy nhà cung cấp phù hợp.</div>';
+    }
+
+    function resetSupplierPicker() {
+      document.getElementById('f-supplier').value = '';
+      document.getElementById('f-supplier-display').innerHTML = `
+        <span class="text-muted">Chọn nhà cung cấp</span>
+        <i class="bi bi-chevron-right float-end mt-1" aria-hidden="true"></i>`;
+      document.getElementById('supplier-search').value = '';
     }
 
     function goodsOptionsHtml() {
@@ -322,9 +389,26 @@
 
     document.getElementById('btn-add-item').addEventListener('click', addItemRow);
 
+    document.getElementById('f-supplier-display').addEventListener('click', async () => {
+      supplierPicker.show();
+      if (!supplierOptions.length) await loadSupplierOptions();
+      else renderSupplierOptions();
+    });
+
+    document.getElementById('supplier-search').addEventListener('input', utils.debounce(renderSupplierOptions, 150));
+    document.getElementById('supplier-picker-list').addEventListener('click', event => {
+      const option = event.target.closest('[data-supplier-id]');
+      if (!option) return;
+      document.getElementById('f-supplier').value = option.dataset.supplierId;
+      document.getElementById('f-supplier-display').innerHTML = `
+        <span>${option.dataset.supplierName}</span>
+        <i class="bi bi-chevron-right float-end mt-1" aria-hidden="true"></i>`;
+      supplierPicker.hide();
+    });
+
     /* Mở modal tạo PO */
     document.getElementById('btn-add').addEventListener('click', async () => {
-      document.getElementById('f-supplier').value = '';
+      resetSupplierPicker();
       document.getElementById('f-date').value = new Date().toISOString().slice(0, 16);
       document.getElementById('items-tbody').innerHTML = '';
       document.getElementById('form-error').classList.add('d-none');

@@ -6,6 +6,7 @@ from app.models.goods import Goods
 from app.models.category import Category
 from app.models.supplier import Supplier
 from app.models.purchase_order import PurchaseOrder
+from app.models.goods_issue import GoodsIssue
 
 @pytest.fixture
 def app():
@@ -35,7 +36,7 @@ def app():
         
         goods1 = Goods(
             sku="SKU001", name="Laptop", category_id=category.id, 
-            unit="Cái", min_stock=10, quantity_on_hand=5,
+                unit="Cái", min_stock=10, quantity_on_hand=100,
             status="active"
         )
         db.session.add(goods1)
@@ -113,6 +114,14 @@ def test_status_transitions(client, keeper_headers, app):
     res = client.put(f"/api/purchase-orders/{po_id}/status", json={"status": "đã nhận"}, headers=keeper_headers)
     assert res.status_code == 200
 
+    with app.app_context():
+        goods = db.session.get(Goods, 1)
+        issue = GoodsIssue.query.one()
+        assert goods.quantity_on_hand == 50
+        assert issue.note == f"Tự động từ đơn đặt hàng #{po_id}"
+        assert issue.items[0].goods_id == 1
+        assert issue.items[0].quantity == 50
+
 def test_invalid_status_transition(client, keeper_headers):
     # Tạo PO
     data = {
@@ -126,3 +135,37 @@ def test_invalid_status_transition(client, keeper_headers):
     res = client.put(f"/api/purchase-orders/{po_id}/status", json={"status": "đã nhận"}, headers=keeper_headers)
     assert res.status_code == 400
     assert res.json["error_code"] == "INVALID_STATE_TRANSITION"
+
+
+def test_receive_po_rolls_back_when_stock_is_insufficient(client, keeper_headers, app):
+    data = {
+        "supplier_id": 1,
+        "items": [{"goods_id": 1, "quantity_ordered": 150, "unit_price": 1000.0}]
+    }
+    res = client.post("/api/purchase-orders", json=data, headers=keeper_headers)
+    po_id = res.json["id"]
+
+    client.put(
+        f"/api/purchase-orders/{po_id}/status",
+        json={"status": "đã xác nhận"},
+        headers=keeper_headers,
+    )
+    client.put(
+        f"/api/purchase-orders/{po_id}/status",
+        json={"status": "đang giao"},
+        headers=keeper_headers,
+    )
+
+    res = client.put(
+        f"/api/purchase-orders/{po_id}/status",
+        json={"status": "đã nhận"},
+        headers=keeper_headers,
+    )
+    assert res.status_code == 400
+    assert res.json["error_code"] == "INSUFFICIENT_STOCK"
+
+    with app.app_context():
+        po = db.session.get(PurchaseOrder, po_id)
+        assert po.status == "đang giao"
+        assert GoodsIssue.query.count() == 0
+        assert db.session.get(Goods, 1).quantity_on_hand == 100

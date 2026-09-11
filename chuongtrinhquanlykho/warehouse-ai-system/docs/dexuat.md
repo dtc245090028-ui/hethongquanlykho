@@ -152,7 +152,7 @@ Một danh mục có nhiều hàng hóa.
 **Chưa tự động:**
 
 - Tạo PO không tạo phiếu nhập.
-- Chuyển PO sang `đã nhận` không cộng tồn.
+- Khi PO chuyển từ `đang giao` sang `đã nhận`, hệ thống tự tạo phiếu xuất theo các dòng đã đặt và trừ tồn qua transaction phiếu xuất.
 - Không tự sinh phiếu nhập.
 - Không tự tạo hóa đơn.
 
@@ -257,24 +257,25 @@ Thủ kho lập -> Chờ phê duyệt -> Quản lý kho duyệt -> Cập nhật 
 
 1. Lập phiếu nhập thì cộng tồn kho.
 2. Lập phiếu xuất thì trừ tồn kho.
-3. Không cho xuất vượt tồn.
-4. Duyệt kiểm kê thì cập nhật tồn thực tế.
-5. Kiểm tra PO khi lập phiếu nhập.
-6. Tính số tiền đã thanh toán từ lịch sử thanh toán.
-7. Báo cáo đọc dữ liệu nhập, xuất và tồn.
-8. AI phân tích tồn kho và đưa ra gợi ý.
+3. PO chuyển từ `đang giao` sang `đã nhận` thì tự tạo phiếu xuất và trừ tồn tương ứng.
+4. Không cho xuất vượt tồn.
+5. Duyệt kiểm kê thì cập nhật tồn thực tế.
+6. Kiểm tra PO khi lập phiếu nhập.
+7. Tính số tiền đã thanh toán từ lịch sử thanh toán.
+8. Báo cáo đọc dữ liệu nhập, xuất và tồn.
+9. AI phân tích tồn kho và đưa ra gợi ý.
 
 ## 6. Những phần chưa tự động
 
 1. Thêm hàng hóa không tạo tồn đầu kỳ.
 2. Tạo PO không tự tạo phiếu nhập.
-3. Chuyển PO sang `đã nhận` không tự cộng tồn.
-4. Chưa tự sinh phiếu nhập từ PO.
-5. Chưa tự sinh hóa đơn từ phiếu nhập.
-6. Chưa tự cập nhật công nợ từ một chuỗi nghiệp vụ hoàn chỉnh.
-7. Hàng xuống dưới Min chưa tự tạo PO.
-8. AI chỉ đưa gợi ý, chưa được phép tự tạo giao dịch.
-9. Chưa có model riêng ghi nhận mọi biến động tồn kho.
+3. Chưa tự sinh phiếu nhập từ PO.
+4. Chưa tự sinh hóa đơn từ phiếu nhập.
+5. Chưa tự cập nhật công nợ từ một chuỗi nghiệp vụ hoàn chỉnh.
+6. Hàng xuống dưới Min chưa tự tạo PO.
+7. AI chỉ đưa gợi ý, chưa được phép tự tạo giao dịch.
+8. Chưa có model riêng ghi nhận mọi biến động tồn kho.
+9. Phiếu xuất tự động từ PO hiện liên kết bằng ghi chú, chưa có khóa ngoại `po_id`.
 10. Phiếu xuất chưa liên kết với bộ phận nhận, đơn bán hoặc lệnh sản xuất.
 
 ## 7. Kết luận

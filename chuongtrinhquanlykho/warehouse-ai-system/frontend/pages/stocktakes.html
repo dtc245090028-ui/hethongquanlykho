@@ -170,7 +170,7 @@
           const diff = it.difference;
           const diffClass = diff < 0 ? 'text-danger' : diff > 0 ? 'text-success' : 'text-muted';
           const diffSign = diff > 0 ? '+' : '';
-          const actionInput = (s.status === 'đang kiểm kê' && role === 'warehouse_keeper')
+          const actionInput = (s.status === 'đang kiểm kê' && ['admin', 'warehouse_keeper'].includes(role))
             ? `<input type="text" class="form-control form-control-sm action-input" data-item-id="${it.id}" value="${utils.escapeHtml(it.action || '')}" placeholder="Đề xuất xử lý chênh lệch..."/>`
             : (utils.escapeHtml(it.action || '—'));
           return `
@@ -207,7 +207,7 @@
 
         /* Thêm nút action tùy role + status */
         const footer = document.getElementById('detail-footer');
-        if (s.status === 'đang kiểm kê' && role === 'warehouse_keeper') {
+        if (s.status === 'đang kiểm kê' && ['admin', 'warehouse_keeper'].includes(role)) {
           footer.innerHTML += `<button class="btn btn-warning" id="btn-propose">
             <i class="bi bi-send me-1"></i>Đề xuất xử lý
           </button>`;

@@ -648,6 +648,99 @@ code, .font-mono {
   }
 }
 
+/* Bộ chọn nhà cung cấp trong form tạo đơn đặt hàng. */
+.supplier-picker-trigger {
+  min-height: 38px;
+  border-color: rgba(255,255,255,0.1);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.supplier-picker-trigger:hover,
+.supplier-picker-trigger:focus {
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 0 2px rgba(232,255,0,0.12);
+  color: var(--text-primary);
+}
+
+#supplier-picker {
+  z-index: 1065;
+  width: min(420px, 100vw);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+#supplier-picker .offcanvas-header {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-color);
+}
+
+#supplier-picker .offcanvas-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.supplier-picker-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.supplier-picker-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.7rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.supplier-picker-option:hover,
+.supplier-picker-option:focus-visible {
+  border-color: var(--accent-yellow);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: translateX(-2px);
+  outline: none;
+}
+
+.supplier-picker-option-icon {
+  display: grid;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid rgba(232,255,0,0.25);
+  border-radius: 50%;
+  color: var(--accent-yellow);
+}
+
+.supplier-picker-option-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.supplier-picker-option-copy strong,
+.supplier-picker-option-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supplier-picker-option-copy strong { font-size: 0.875rem; }
+.supplier-picker-option-copy small { color: var(--text-secondary); font-size: 0.75rem; }
+.supplier-picker-check { margin-left: auto; color: var(--accent-yellow); opacity: 0; }
+.supplier-picker-option[aria-selected="true"] .supplier-picker-check { opacity: 1; }
+
+.offcanvas-backdrop { z-index: 1060; }
+
 /* ---- Sidebar ---- */
 #sidebar {
   width: var(--sidebar-width);

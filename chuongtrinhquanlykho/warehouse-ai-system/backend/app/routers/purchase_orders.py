@@ -6,6 +6,7 @@ from app.extensions import db
 from app.models.purchase_order import PurchaseOrder, PurchaseOrderItem
 from app.models.supplier import Supplier
 from app.models.goods import Goods
+from app.routers.goods_issues import GoodsIssueError, create_goods_issue_transaction
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
 from sqlalchemy import case
@@ -59,7 +60,7 @@ def get_purchase_orders():
 
 @bp.route("", methods=["POST"])
 @jwt_required()
-@roles_required("warehouse_keeper")
+@roles_required("admin", "warehouse_keeper")
 def create_purchase_order():
     """Tạo mới Purchase Order"""
     data = request.get_json()
@@ -123,7 +124,7 @@ def create_purchase_order():
 
 @bp.route("/<int:id>", methods=["GET"])
 @jwt_required()
-@roles_required("warehouse_keeper", "warehouse_manager")
+@roles_required("admin", "warehouse_keeper", "warehouse_manager")
 def get_purchase_order_details(id):
     """Lấy chi tiết PO"""
     po = db.session.get(PurchaseOrder, id)
@@ -134,7 +135,7 @@ def get_purchase_order_details(id):
 
 @bp.route("/<int:id>/status", methods=["PUT"])
 @jwt_required()
-@roles_required("warehouse_keeper")
+@roles_required("admin", "warehouse_keeper")
 def update_purchase_order_status(id):
     """Cập nhật trạng thái PO"""
     data = request.get_json()
@@ -158,7 +159,37 @@ def update_purchase_order_status(id):
             "message": f"Không thể chuyển trạng thái từ '{current_status}' sang '{new_status}'"
         }), 400
 
+    if current_status == "đang giao" and new_status == "đã nhận":
+        try:
+            create_goods_issue_transaction(
+                user_id=int(get_jwt_identity()),
+                items_data=[
+                    {
+                        "goods_id": item.goods_id,
+                        "quantity": item.quantity_ordered,
+                    }
+                    for item in po.items
+                ],
+                issued_date=datetime.now(timezone.utc).replace(tzinfo=None),
+                note=f"Tự động từ đơn đặt hàng #{po.id}",
+                commit=False,
+            )
+        except GoodsIssueError as error:
+            return jsonify({
+                "error_code": error.error_code,
+                "message": (
+                    f"Không thể nhận đơn hàng và tạo phiếu xuất: {error.message}"
+                ),
+            }), error.status_code
+
     po.status = new_status
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return jsonify({
+            "error_code": "INTERNAL_SERVER_ERROR",
+            "message": "Không thể cập nhật trạng thái đơn đặt hàng.",
+        }), 500
 
     return jsonify(po.to_dict(include_items=True)), 200

@@ -34,7 +34,7 @@ def get_stocktakes():
 
 @stocktakes_bp.route("", methods=["POST"])
 @jwt_required()
-@roles_required("warehouse_keeper")
+@roles_required("admin", "warehouse_keeper")
 def create_stocktake():
     data = request.get_json() or {}
     items_data = data.get("items", [])
@@ -112,7 +112,7 @@ def create_stocktake():
 
 @stocktakes_bp.route("/<int:stocktake_id>/propose", methods=["PUT"])
 @jwt_required()
-@roles_required("warehouse_keeper")
+@roles_required("admin", "warehouse_keeper")
 def propose_stocktake(stocktake_id):
     stocktake = db.session.get(Stocktake, stocktake_id)
     if not stocktake:
