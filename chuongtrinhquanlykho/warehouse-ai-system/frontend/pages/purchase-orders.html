@@ -29,6 +29,9 @@
               <input type="number" id="supplier-filter" class="form-control form-control-sm" placeholder="ID Nhà cung cấp"/>
             </div>
             <div class="col-auto ms-md-auto">
+              <button class="btn btn-outline-primary btn-sm me-2" id="btn-buyer-requests">
+                <i class="bi bi-bag-check me-1"></i>Đặt mua
+              </button>
               <button class="btn btn-primary btn-sm" id="btn-add">
                 <i class="bi bi-plus-lg me-1"></i>Tạo đơn đặt hàng
               </button>
@@ -100,6 +103,7 @@
                   <th>Hàng hóa</th>
                   <th>Số lượng đặt</th>
                   <th>Đơn giá (VND)</th>
+                  <th>Thành tiền</th>
                   <th style="width:50px"></th>
                 </tr>
               </thead>
@@ -177,6 +181,14 @@
     </div>
   </div>
 
+  <div class="modal fade" id="buyer-requests-modal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Yêu cầu đặt mua từ khách hàng</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body"><div id="buyer-requests-error" class="alert alert-danger d-none py-2"></div><div id="buyer-requests-list">Đang tải...</div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button></div>
+    </div></div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../js/api.js"></script>
   <script src="../js/auth.js"></script>
@@ -192,6 +204,7 @@
     const detailModal = new bootstrap.Modal(document.getElementById('detail-modal'));
     const statusModal = new bootstrap.Modal(document.getElementById('status-modal'));
     const supplierPicker = new bootstrap.Offcanvas(document.getElementById('supplier-picker'));
+    const buyerRequestsModal = new bootstrap.Modal(document.getElementById('buyer-requests-modal'));
 
     async function loadGoodsOptions() {
       const data = await api.get('/goods', { page: 1, page_size: 1000, status: 'active' });
@@ -241,6 +254,71 @@
         <span class="text-muted">Chọn nhà cung cấp</span>
         <i class="bi bi-chevron-right float-end mt-1" aria-hidden="true"></i>`;
       document.getElementById('supplier-search').value = '';
+    }
+
+    async function loadBuyerRequests() {
+      const list = document.getElementById('buyer-requests-list');
+      const error = document.getElementById('buyer-requests-error');
+      error.classList.add('d-none');
+      list.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm"></div> Đang tải...</div>';
+      try {
+        const [requestResult, supplierResult] = await Promise.all([
+          api.get('/buyer-portal/requests'),
+          api.get('/suppliers', { page: 1, page_size: 1000, status: 'active' }),
+        ]);
+        const requests = (requestResult.data || []).filter(item => item.status === 'chờ xử lý');
+        const suppliers = supplierResult.data || [];
+        if (!requests.length) { list.innerHTML = '<div class="text-center text-muted py-5">Chưa có yêu cầu đặt mua đang chờ xử lý.</div>'; return; }
+        list.innerHTML = requests.map(record => `
+          <div class="card mb-3 buyer-request-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-3"><div><strong>${utils.escapeHtml(record.buyer_name)}</strong><div class="small text-muted">Yêu cầu #${record.id} · ${utils.formatDate(record.created_at)}</div></div><span class="badge bg-warning">Chờ xử lý</span></div>
+              <div class="table-responsive"><table class="table table-sm mb-3"><thead><tr><th>Mặt hàng</th><th>Đơn vị</th><th>Số lượng</th><th>Đơn giá</th><th>Thành tiền</th></tr></thead><tbody>${(record.items || []).map(item => `<tr><td>${utils.escapeHtml(item.goods_name || 'Không xác định')}</td><td>${utils.escapeHtml(item.unit || '')}</td><td>${utils.formatQty(item.quantity)}</td><td>${utils.formatCurrency(item.unit_price)}</td><td>${utils.formatCurrency(item.total_amount)}</td></tr>`).join('')}</tbody></table></div>
+              <div class="row g-2 align-items-end"><div class="col-md-8"><label class="form-label small">Nhà cung cấp thực tế để tạo đơn</label><select class="form-select form-select-sm request-supplier"><option value="">Chọn nhà cung cấp</option>${suppliers.map(supplier => `<option value="${supplier.id}">${utils.escapeHtml(supplier.name)}</option>`).join('')}</select></div><div class="col-md-4"><button class="btn btn-primary btn-sm w-100 confirm-buyer-request" data-request-id="${record.id}"><i class="bi bi-arrow-up-right me-1"></i>Mở form tạo đơn</button></div></div>
+            </div>
+          </div>`).join('');
+        list.querySelectorAll('.confirm-buyer-request').forEach(button => button.addEventListener('click', async () => {
+          const card = button.closest('.buyer-request-card');
+          const supplierId = card.querySelector('.request-supplier').value;
+          if (!supplierId) { utils.showToast('Vui lòng chọn nhà cung cấp thực tế.', 'danger'); return; }
+          button.disabled = true;
+          try {
+            const record = (await api.get('/buyer-portal/requests')).data.find(item => String(item.id) === button.dataset.requestId);
+            sessionStorage.setItem('pending_buyer_request', JSON.stringify({ request: record, supplier_id: Number(supplierId) }));
+            buyerRequestsModal.hide();
+            window.location.href = 'purchase-orders.html?from_buyer_request=1';
+          } catch (err) { utils.showToast('Không thể mở form tạo đơn: ' + err.message, 'danger'); button.disabled = false; }
+        }));
+      } catch (err) { error.textContent = 'Lỗi: ' + err.message; error.classList.remove('d-none'); list.innerHTML = ''; }
+    }
+
+    document.getElementById('btn-buyer-requests').addEventListener('click', () => { buyerRequestsModal.show(); loadBuyerRequests(); });
+
+    async function openBuyerRequestForm() {
+      const raw = sessionStorage.getItem('pending_buyer_request');
+      if (!raw || !new URLSearchParams(window.location.search).has('from_buyer_request')) return;
+      sessionStorage.removeItem('pending_buyer_request');
+      const pending = JSON.parse(raw);
+      const record = pending.request;
+      resetSupplierPicker();
+      await loadGoodsOptions();
+      await loadSupplierOptions();
+      const supplier = supplierOptions.find(item => String(item.id) === String(pending.supplier_id));
+      document.getElementById('f-supplier').value = String(pending.supplier_id);
+      document.getElementById('f-supplier-display').innerHTML = `<span>${utils.escapeHtml(supplier?.name || 'Nhà cung cấp')}</span><i class="bi bi-chevron-right float-end mt-1" aria-hidden="true"></i>`;
+      document.getElementById('f-date').value = new Date().toISOString().slice(0, 16);
+      document.getElementById('items-tbody').innerHTML = '';
+      (record.items || []).forEach(item => {
+        addItemRow();
+        const row = document.getElementById('items-tbody').lastElementChild;
+        row.querySelector('[name=goods_id]').value = String(item.goods_id);
+        row.querySelector('[name=qty]').value = item.quantity;
+        row.querySelector('[name=price]').value = item.unit_price;
+        row.querySelector('[name=goods_id]').dispatchEvent(new Event('change'));
+      });
+      document.getElementById('form-error').classList.add('d-none');
+      poModal.show();
+      window.pendingBuyerRequestId = record.id;
     }
 
     function goodsOptionsHtml() {
@@ -374,6 +452,7 @@
         <td><select class="form-select form-select-sm" name="goods_id">${goodsOptionsHtml()}</select></td>
         <td><div class="issue-quantity-control"><input type="number" class="form-control form-control-sm" name="qty" min="1" value="1" placeholder="Số lượng"/><span class="issue-stock-hint">Đang có: —</span></div></td>
         <td><input type="number" class="form-control form-control-sm" name="price" min="0" value="0" placeholder="Đơn giá"/></td>
+        <td class="text-end fw-semibold" data-total>0 VND</td>
         <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">
           <i class="bi bi-trash"></i>
         </button></td>`;
@@ -381,11 +460,26 @@
     }
 
     document.getElementById('items-tbody').addEventListener('change', event => {
-      if (event.target.name !== 'goods_id') return;
-      const option = event.target.selectedOptions[0];
-      const hint = event.target.closest('tr').querySelector('.issue-stock-hint');
-      hint.textContent = option.value ? `Đang có: ${utils.formatQty(option.dataset.stock)} ${option.dataset.unit}` : 'Đang có: —';
+      const row = event.target.closest('tr');
+      if (event.target.name === 'goods_id') {
+        const option = event.target.selectedOptions[0];
+        const hint = row.querySelector('.issue-stock-hint');
+        hint.textContent = option.value ? `Đang có: ${utils.formatQty(option.dataset.stock)} ${option.dataset.unit}` : 'Đang có: —';
+      }
+      updateOrderItemTotal(row);
     });
+
+    document.getElementById('items-tbody').addEventListener('input', event => {
+      updateOrderItemTotal(event.target.closest('tr'));
+    });
+
+    function updateOrderItemTotal(row) {
+      if (!row) return;
+      const quantity = parseFloat(row.querySelector('[name=qty]')?.value) || 0;
+      const price = parseFloat(row.querySelector('[name=price]')?.value) || 0;
+      const total = row.querySelector('[data-total]');
+      if (total) total.textContent = utils.formatCurrency(quantity * price);
+    }
 
     document.getElementById('btn-add-item').addEventListener('click', addItemRow);
 
@@ -462,13 +556,16 @@
       document.getElementById('btn-save').disabled = true;
 
       try {
-        await api.post('/purchase-orders', {
+        const body = {
           supplier_id: parseInt(supplierId),
           order_date: new Date(orderDate).toISOString(),
           items,
-        });
+        };
+        if (window.pendingBuyerRequestId) body.buyer_request_id = window.pendingBuyerRequestId;
+        await api.post('/purchase-orders', body);
         utils.showToast('Tạo đơn đặt hàng thành công!', 'success');
         poModal.hide();
+        window.pendingBuyerRequestId = null;
         loadPOs(currentPage);
       } catch (err) {
         errDiv.textContent = 'Lỗi: ' + err.message;
@@ -485,6 +582,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       setPageTitle('Đơn đặt hàng');
       loadPOs(1);
+      openBuyerRequestForm().catch(err => utils.showToast('Không thể mở yêu cầu đặt mua: ' + err.message, 'danger'));
     });
   </script>
 </body>

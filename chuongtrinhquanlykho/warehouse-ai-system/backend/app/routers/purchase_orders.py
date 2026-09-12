@@ -6,6 +6,7 @@ from app.extensions import db
 from app.models.purchase_order import PurchaseOrder, PurchaseOrderItem
 from app.models.supplier import Supplier
 from app.models.goods import Goods
+from app.models.buyer_request import BuyerRequest
 from app.routers.goods_issues import GoodsIssueError, create_goods_issue_transaction
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
@@ -77,6 +78,22 @@ def create_purchase_order():
     if not supplier or supplier.status == 'inactive':
         return jsonify({"error_code": "INVALID_SUPPLIER", "message": "Nhà cung cấp không tồn tại hoặc đã ngừng hợp tác"}), 400
 
+    buyer_request_id = data.get("buyer_request_id")
+    buyer_request = None
+    if buyer_request_id is not None:
+        buyer_request = db.session.get(BuyerRequest, buyer_request_id)
+        if not buyer_request or buyer_request.status != "chờ xử lý":
+            return jsonify({"error_code": "INVALID_BUYER_REQUEST", "message": "Yêu cầu đặt mua không tồn tại hoặc đã được xử lý"}), 400
+        if len(items_data) != len(buyer_request.items):
+            return jsonify({"error_code": "BUYER_REQUEST_MISMATCH", "message": "Danh sách hàng trong đơn không khớp yêu cầu đặt mua"}), 400
+        for request_item, order_item in zip(buyer_request.items, items_data):
+            if (
+                int(order_item.get("goods_id")) != request_item.goods_id
+                or float(order_item.get("quantity_ordered")) != request_item.quantity
+                or float(order_item.get("unit_price") or 0) != request_item.unit_price
+            ):
+                return jsonify({"error_code": "BUYER_REQUEST_MISMATCH", "message": "Mặt hàng, số lượng hoặc đơn giá không khớp yêu cầu đặt mua"}), 400
+
     # Validate items
     for item in items_data:
         qty = item.get("quantity_ordered")
@@ -117,6 +134,10 @@ def create_purchase_order():
             unit_price=item.get("unit_price")
         )
         db.session.add(po_item)
+
+    if buyer_request is not None:
+        buyer_request.status = "đã tạo đơn"
+        buyer_request.purchase_order_id = po.id
 
     db.session.commit()
 

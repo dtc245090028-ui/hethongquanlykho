@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bàn chào giá | Warehouse AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/supplier-portal.css"/>
+</head>
+<body class="supplier-portal-page">
+  <header class="supplier-topbar">
+    <a class="supplier-brand" href="supplier-portal.html"><span><i class="bi bi-box-seam"></i></span> Warehouse AI</a>
+    <div class="supplier-session"><span id="supplier-name">Nhà cung cấp</span><button id="logout-button" title="Đăng xuất"><i class="bi bi-box-arrow-right"></i></button></div>
+  </header>
+  <main class="portal-shell">
+    <section class="portal-heading">
+      <div><p class="eyebrow">Supplier desk / Offer board</p><h1>Xin chào, <span id="supplier-heading">đối tác</span>.</h1><p>Gửi một đề xuất chào bán rõ ràng để đội kho dễ đối chiếu.</p></div>
+      <div class="heading-stamp"><i class="bi bi-lightning-charge"></i><span>Đề xuất mới<br/><strong>01 bước</strong></span></div>
+    </section>
+
+    <div id="page-alert" class="portal-alert d-none" role="alert"></div>
+    <section class="portal-grid">
+      <form id="offer-form" class="offer-sheet" novalidate>
+        <div class="sheet-top"><div><span class="sheet-number">01</span><div><p class="eyebrow">New offer</p><h2>Chào bán mặt hàng</h2></div></div><i class="bi bi-arrow-up-right"></i></div>
+        <div class="offer-type" role="group" aria-label="Loại mặt hàng">
+          <button type="button" class="type-button is-active" data-type="catalog"><i class="bi bi-grid-3x3-gap"></i><span><strong>Mặt hàng đang bán</strong><small>Chọn từ danh mục của bạn</small></span></button>
+          <button type="button" class="type-button" data-type="new"><i class="bi bi-plus-circle"></i><span><strong>Mặt hàng mới</strong><small>Tự nhập sản phẩm khác</small></span></button>
+        </div>
+        <div id="catalog-fields">
+          <label class="portal-label" for="catalog-item">Mặt hàng</label>
+          <div class="select-wrap"><select id="catalog-item" class="portal-input"><option value="">Đang tải danh mục...</option></select><i class="bi bi-chevron-down"></i></div>
+          <p class="field-hint" id="reference-hint">Chọn một mặt hàng để xem giá tham chiếu.</p>
+        </div>
+        <div id="new-fields" class="d-none two-fields"><div><label class="portal-label" for="new-name">Tên mặt hàng</label><input id="new-name" class="portal-input" placeholder="Ví dụ: Cảm biến áp suất"/></div><div><label class="portal-label" for="new-unit">Đơn vị</label><input id="new-unit" class="portal-input" placeholder="Cái / Kg / Bộ"/></div></div>
+        <div><label class="portal-label" for="offer-quantity">Số lượng có thể cung cấp</label><div class="input-with-icon"><i class="bi bi-boxes"></i><input id="offer-quantity" class="portal-input" type="number" min="0.001" step="any" placeholder="Ví dụ: 100" required/></div></div>
+        <div class="price-block">
+          <div class="price-title"><label class="portal-label mb-0" for="offer-price">Giá chào bán</label><span id="price-basis">VND</span></div>
+          <div class="quick-prices" id="quick-prices"><button type="button" data-rate="1">Theo giá tham chiếu</button><button type="button" data-rate="0.9">-10%</button><button type="button" data-rate="1.1">+10%</button><button type="button" data-rate="custom">Tự nhập</button></div>
+          <div class="price-input-wrap"><input id="offer-price" class="portal-input" type="number" min="0" step="any" placeholder="Nhập giá đề xuất" required/><span>VND</span></div>
+        </div>
+        <div><label class="portal-label" for="price-reason">Lý do điều chỉnh giá <span>(không bắt buộc)</span></label><textarea id="price-reason" class="portal-input" rows="3" placeholder="Ví dụ: giao gấp, mua số lượng lớn, kèm kiểm định..."></textarea></div>
+        <button type="submit" class="portal-button" id="offer-button"><span class="button-spinner spinner-border spinner-border-sm d-none"></span>Gửi đề xuất <i class="bi bi-send"></i></button>
+      </form>
+      <aside class="guide-column"><div class="guide-card"><div class="guide-icon"><i class="bi bi-compass"></i></div><p class="eyebrow">Cách dùng</p><h3>Giá rõ ràng,<br/>lý do đủ sáng.</h3><ol><li><span>1</span>Chọn mặt hàng đang bán hoặc nhập mặt hàng mới.</li><li><span>2</span>Chọn nhanh mức giá tham chiếu hoặc tự nhập giá khác.</li><li><span>3</span>Thêm bối cảnh giá nếu đề xuất có biến động.</li></ol></div><div class="guide-note"><i class="bi bi-info-circle"></i><span>Gửi đề xuất không làm thay đổi tồn kho hay giá hàng hóa trong kho.</span></div></aside>
+    </section>
+  </main>
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+    const token = localStorage.getItem('supplier_access_token');
+    const supplier = JSON.parse(localStorage.getItem('supplier_info') || 'null');
+    if (!token || !supplier) window.location.href = 'vendor-login.html';
+    document.getElementById('supplier-name').textContent = supplier?.name || 'Nhà cung cấp';
+    document.getElementById('supplier-heading').textContent = supplier?.name || 'đối tác';
+    let catalog = [];
+    let offerType = 'catalog';
+    let referencePrice = 0;
+
+    function showAlert(message, kind = 'danger') {
+      const alert = document.getElementById('page-alert');
+      alert.textContent = message; alert.className = `portal-alert portal-alert-${kind}`;
+    }
+    function authHeaders() { return {'Content-Type': 'application/json', Authorization: `Bearer ${token}`}; }
+    async function loadCatalog() {
+      try {
+        const response = await fetch(`${API_BASE}/supplier-portal/catalog`, {headers: authHeaders()});
+        const body = await response.json(); if (!response.ok) throw new Error(body.message || 'Không thể tải danh mục.');
+        catalog = body.data || [];
+        const select = document.getElementById('catalog-item');
+        select.innerHTML = '<option value="">Chọn mặt hàng</option>' + catalog.map(item => `<option value="${item.id}">${item.name} · ${item.sku}</option>`).join('');
+      } catch (error) { showAlert(error.message); }
+    }
+    function setOfferType(type) {
+      offerType = type;
+      document.querySelectorAll('.type-button').forEach(button => button.classList.toggle('is-active', button.dataset.type === type));
+      document.getElementById('catalog-fields').classList.toggle('d-none', type !== 'catalog');
+      document.getElementById('new-fields').classList.toggle('d-none', type !== 'new');
+      referencePrice = 0; document.getElementById('offer-price').value = '';
+    }
+    document.querySelectorAll('.type-button').forEach(button => button.addEventListener('click', () => setOfferType(button.dataset.type)));
+    document.getElementById('catalog-item').addEventListener('change', event => {
+      const item = catalog.find(entry => String(entry.id) === event.target.value); referencePrice = item?.reference_price || 0;
+      document.getElementById('reference-hint').textContent = item ? `Giá tham chiếu: ${referencePrice.toLocaleString('vi-VN')} VND/${item.unit}` : 'Chọn một mặt hàng để xem giá tham chiếu.';
+      document.getElementById('price-basis').textContent = item ? `Giá tham chiếu / ${item.unit}` : 'VND';
+      document.getElementById('offer-price').value = '';
+    });
+    document.querySelectorAll('#quick-prices button').forEach(button => button.addEventListener('click', () => {
+      document.querySelectorAll('#quick-prices button').forEach(item => item.classList.remove('is-selected')); button.classList.add('is-selected');
+      if (button.dataset.rate !== 'custom' && referencePrice) document.getElementById('offer-price').value = Math.round(referencePrice * Number(button.dataset.rate));
+      if (button.dataset.rate === 'custom') document.getElementById('offer-price').focus();
+    }));
+    document.getElementById('offer-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const price = Number(document.getElementById('offer-price').value);
+      const quantity = Number(document.getElementById('offer-quantity').value);
+      const body = {quantity_available: quantity, proposed_price: price, price_reason: document.getElementById('price-reason').value.trim()};
+      if (offerType === 'catalog') body.goods_id = document.getElementById('catalog-item').value;
+      else { body.product_name = document.getElementById('new-name').value.trim(); body.unit = document.getElementById('new-unit').value.trim(); }
+      if (!quantity || quantity <= 0 || !price || price < 0 || (offerType === 'catalog' && !body.goods_id) || (offerType === 'new' && (!body.product_name || !body.unit))) { showAlert('Vui lòng chọn mặt hàng, nhập số lượng lớn hơn 0 và giá chào bán hợp lệ.'); return; }
+      const button = document.getElementById('offer-button'); button.disabled = true; button.querySelector('.button-spinner').classList.remove('d-none');
+      try {
+        const response = await fetch(`${API_BASE}/supplier-portal/offers`, {method: 'POST', headers: authHeaders(), body: JSON.stringify(body)});
+        const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể gửi đề xuất.');
+        showAlert('Đề xuất chào bán đã được gửi thành công.', 'success');
+        document.getElementById('offer-form').reset(); document.getElementById('reference-hint').textContent = 'Chọn một mặt hàng để xem giá tham chiếu.'; referencePrice = 0;
+      } catch (error) { showAlert(error.message); }
+      finally { button.disabled = false; button.querySelector('.button-spinner').classList.add('d-none'); }
+    });
+    document.getElementById('logout-button').addEventListener('click', () => { localStorage.removeItem('supplier_access_token'); localStorage.removeItem('supplier_info'); window.location.href = 'vendor-login.html'; });
+    loadCatalog();
+  </script>
+</body>
+</html>

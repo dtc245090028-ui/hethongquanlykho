@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Đặt mua hàng | Warehouse AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/supplier-portal.css"/>
+</head>
+<body class="supplier-entry">
+  <main class="entry-shell">
+    <section class="entry-intro"><div class="entry-mark"><i class="bi bi-bag-check"></i></div><p class="eyebrow">Warehouse AI / Buyer desk</p><h1>Đặt mua<br/><em>đúng nhịp.</em></h1><p class="intro-copy">Chọn doanh nghiệp, chọn mặt hàng trong kho và gửi nhu cầu mua đến đội vận hành.</p><div class="entry-note"><i class="bi bi-person-check"></i><span>Không cần đăng nhập. Yêu cầu sẽ được nhân viên kho kiểm tra trước khi tạo đơn.</span></div></section>
+    <section class="entry-panel"><div class="panel-kicker">Buyer request</div><h2>Gửi yêu cầu đặt mua</h2><p class="panel-copy">Thông tin này giúp kho chuẩn bị đơn đặt hàng phù hợp.</p><div id="buyer-error" class="portal-alert portal-alert-danger d-none"></div><div id="buyer-success" class="portal-alert portal-alert-success d-none"></div>
+      <form id="buyer-form" novalidate>
+        <label class="portal-label" for="buyer-name">Doanh nghiệp thu mua</label><div class="select-wrap"><select id="buyer-name" class="portal-input" required><option value="">Đang tải doanh nghiệp...</option></select><i class="bi bi-chevron-down"></i></div>
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-2"><label class="portal-label m-0">Mặt hàng cần mua</label><button type="button" class="btn btn-sm btn-outline-primary" id="add-buyer-item"><i class="bi bi-plus"></i> Thêm dòng</button></div>
+        <div id="buyer-items"></div>
+        <button class="portal-button" type="submit" id="buyer-submit"><span class="button-spinner spinner-border spinner-border-sm d-none"></span>Gửi yêu cầu <i class="bi bi-send"></i></button>
+      </form>
+    </section>
+  </main>
+  <script>
+    const API_BASE = 'http://localhost:5000/api';
+    let catalog = [];
+    const errorBox = document.getElementById('buyer-error');
+    function showMessage(element, message) { element.textContent = message; element.classList.remove('d-none'); }
+    function goodsOptions() { return '<option value="">Chọn mặt hàng</option>' + catalog.map(item => `<option value="${item.id}">${item.name} · ${item.sku} (${item.unit})</option>`).join(''); }
+    function addItemRow() { const row = document.createElement('div'); row.className = 'buyer-item-row mb-3'; row.innerHTML = `<div class="two-fields"><select class="portal-input buyer-goods" required>${goodsOptions()}</select><input class="portal-input buyer-quantity" type="number" min="0.001" step="any" placeholder="Số lượng" required/></div><div class="two-fields mt-2"><input class="portal-input buyer-price" type="number" min="0" step="any" placeholder="Đơn giá (VND)" required/><div class="input-group"><input class="portal-input buyer-total" type="text" placeholder="Thành tiền" readonly/><button type="button" class="btn btn-outline-danger remove-buyer-item" title="Xóa dòng"><i class="bi bi-trash"></i></button></div></div>`; document.getElementById('buyer-items').appendChild(row); }
+    async function init() { try { const [buyersResponse, catalogResponse] = await Promise.all([fetch(`${API_BASE}/buyer-portal/buyers`), fetch(`${API_BASE}/buyer-portal/catalog`)]); const buyers = await buyersResponse.json(); const goods = await catalogResponse.json(); if (!buyersResponse.ok || !catalogResponse.ok) throw new Error('Không thể tải dữ liệu đặt mua.'); document.getElementById('buyer-name').innerHTML = '<option value="">Chọn doanh nghiệp</option>' + buyers.data.map(item => `<option>${item.name}</option>`).join(''); catalog = goods.data || []; addItemRow(); } catch (error) { showMessage(errorBox, error.message); } }
+    document.getElementById('add-buyer-item').addEventListener('click', addItemRow);
+    document.getElementById('buyer-items').addEventListener('click', event => { if (event.target.closest('.remove-buyer-item')) event.target.closest('.buyer-item-row').remove(); });
+    document.getElementById('buyer-items').addEventListener('input', event => { if (!event.target.matches('.buyer-quantity, .buyer-price')) return; const row = event.target.closest('.buyer-item-row'); const quantity = Number(row.querySelector('.buyer-quantity').value) || 0; const price = Number(row.querySelector('.buyer-price').value) || 0; row.querySelector('.buyer-total').value = (quantity * price).toLocaleString('vi-VN') + ' VND'; });
+    document.getElementById('buyer-form').addEventListener('submit', async event => { event.preventDefault(); errorBox.classList.add('d-none'); document.getElementById('buyer-success').classList.add('d-none'); const buyerName = document.getElementById('buyer-name').value; const items = [...document.querySelectorAll('.buyer-item-row')].map(row => ({goods_id: Number(row.querySelector('.buyer-goods').value), quantity: Number(row.querySelector('.buyer-quantity').value), unit_price: Number(row.querySelector('.buyer-price').value)})); if (!buyerName || !items.length || items.some(item => !item.goods_id || !item.quantity || item.quantity <= 0 || Number.isNaN(item.unit_price) || item.unit_price < 0)) { showMessage(errorBox, 'Vui lòng chọn doanh nghiệp, số lượng và đơn giá hợp lệ.'); return; } const button = document.getElementById('buyer-submit'); button.disabled = true; button.querySelector('.button-spinner').classList.remove('d-none'); try { const response = await fetch(`${API_BASE}/buyer-portal/requests`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({buyer_name: buyerName, items})}); const result = await response.json(); if (!response.ok) throw new Error(result.message || 'Không thể gửi yêu cầu.'); showMessage(document.getElementById('buyer-success'), `Đã gửi yêu cầu #${result.id}. Nhân viên kho sẽ kiểm tra và xác nhận.`); document.getElementById('buyer-form').reset(); document.getElementById('buyer-items').innerHTML = ''; addItemRow(); } catch (error) { showMessage(errorBox, error.message); } finally { button.disabled = false; button.querySelector('.button-spinner').classList.add('d-none'); } });
+    init();
+  </script>
+</body>
+</html>

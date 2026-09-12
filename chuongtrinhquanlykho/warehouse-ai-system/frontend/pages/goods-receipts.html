@@ -145,6 +145,7 @@
     let currentPage = 1;
     const PAGE_SIZE = 20;
     let goodsOptions = [];
+    let pendingOfferId = null;
     const receiptModal = new bootstrap.Modal(document.getElementById('receipt-modal'));
     const detailModal  = new bootstrap.Modal(document.getElementById('detail-modal'));
 
@@ -270,11 +271,41 @@
 
     document.getElementById('btn-add-item').addEventListener('click', addItemRow);
 
+    async function openOfferAsReceipt() {
+      const rawOffer = sessionStorage.getItem('pending_supplier_offer');
+      if (!rawOffer || !new URLSearchParams(window.location.search).has('from_offer')) return;
+      sessionStorage.removeItem('pending_supplier_offer');
+      const offer = JSON.parse(rawOffer);
+      pendingOfferId = offer.id;
+      document.getElementById('f-po').value = '';
+      document.getElementById('f-date').value = new Date().toISOString().slice(0, 16);
+      document.getElementById('f-note').value = `Nhập theo chào bán #${offer.id}`;
+      document.getElementById('items-tbody').innerHTML = '';
+      document.getElementById('form-error').classList.add('d-none');
+      try {
+        await Promise.all([loadGoodsOptions(), loadSupplierOptions()]);
+        document.getElementById('f-supplier').value = String(offer.supplier_id);
+        addItemRow();
+        const row = document.getElementById('items-tbody').lastElementChild;
+        row.querySelector('[name=goods_id]').value = String(offer.goods_id);
+        row.querySelector('[name=qty]').value = offer.quantity_available;
+        row.querySelector('[name=price]').value = offer.proposed_price;
+        row.querySelector('[name=goods_id]').dispatchEvent(new Event('change'));
+        receiptModal.show();
+      } catch (err) {
+        const error = document.getElementById('form-error');
+        error.textContent = 'Không thể mở chào bán thành phiếu nhập: ' + err.message;
+        error.classList.remove('d-none');
+        receiptModal.show();
+      }
+    }
+
     document.getElementById('btn-add').addEventListener('click', async () => {
       document.getElementById('f-supplier').value = '';
       document.getElementById('f-po').value = '';
       document.getElementById('f-date').value = new Date().toISOString().slice(0, 16);
       document.getElementById('f-note').value = '';
+      pendingOfferId = null;
       document.getElementById('items-tbody').innerHTML = '';
       document.getElementById('form-error').classList.add('d-none');
       try {
@@ -339,10 +370,12 @@
         };
         if (poId) body.po_id = parseInt(poId);
         if (note) body.note = note;
+        if (pendingOfferId) body.offer_id = pendingOfferId;
 
         await api.post('/goods-receipts', body);
         utils.showToast('Lập phiếu nhập kho thành công! Tồn kho đã được cập nhật.', 'success');
         receiptModal.hide();
+        pendingOfferId = null;
         loadReceipts(currentPage);
       } catch (err) {
         errDiv.textContent = 'Lỗi: ' + err.message;
@@ -360,6 +393,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       setPageTitle('Phiếu nhập kho');
       loadReceipts(1);
+      openOfferAsReceipt();
     });
   </script>
 </body>

@@ -152,6 +152,13 @@ class Supplier(db.Model):
     )
     """Các mặt hàng mà NCC này là nhà cung cấp ưu tiên"""
 
+    offers = db.relationship(
+      "SupplierOffer",
+      back_populates="supplier",
+      cascade="all, delete-orphan",
+      lazy="dynamic",
+    )
+
     # ---- Methods ----
 
     def to_dict(self) -> dict:

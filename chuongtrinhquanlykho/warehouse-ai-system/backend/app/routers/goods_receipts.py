@@ -30,6 +30,7 @@ from app.models.goods_receipt import GoodsReceipt, GoodsReceiptItem
 from app.models.supplier import Supplier
 from app.models.goods import Goods
 from app.models.purchase_order import PurchaseOrder
+from app.models.supplier_offer import SupplierOffer
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
 
@@ -204,6 +205,29 @@ def create_goods_receipt():
                 "message": "PO không thuộc nhà cung cấp đã chọn"
             }), 400
 
+    # Chào bán chỉ được xóa cùng transaction với phiếu nhập thành công.
+    offer_id = data.get("offer_id")
+    offer = None
+    if offer_id is not None:
+        offer = db.session.get(SupplierOffer, offer_id)
+        if not offer:
+            return jsonify({
+                "error_code": "OFFER_NOT_FOUND",
+                "message": "Không tìm thấy đề xuất chào bán",
+            }), 404
+        if offer.supplier_id != supplier_id:
+            return jsonify({
+                "error_code": "OFFER_SUPPLIER_MISMATCH",
+                "message": "Đề xuất chào bán không thuộc nhà cung cấp đã chọn",
+            }), 400
+        if offer.goods_id is not None and not any(
+            item.get("goods_id") == offer.goods_id for item in items_data
+        ):
+            return jsonify({
+                "error_code": "OFFER_GOODS_MISMATCH",
+                "message": "Mặt hàng trong phiếu nhập không khớp đề xuất chào bán",
+            }), 400
+
     # ---- Parse received_date ----
     received_date_str = data.get("received_date")
     received_date = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -334,6 +358,9 @@ def create_goods_receipt():
             # Dùng đối tượng Goods đã load sẵn trong goods_map (tránh query lại)
             goods_obj = goods_map[goods_id]
             goods_obj.quantity_on_hand += quantity
+
+        if offer is not None:
+            db.session.delete(offer)
 
         # Commit toàn bộ transaction một lần duy nhất
         # → nếu thất bại, SQLAlchemy tự rollback toàn bộ (atomic)

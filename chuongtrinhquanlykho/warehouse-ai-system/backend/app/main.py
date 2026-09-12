@@ -21,6 +21,7 @@ import os
 from flask import Flask
 from flask_cors import CORS
 from dotenv import load_dotenv
+from sqlalchemy import inspect, text
 
 # Load biến môi trường từ file .env TRƯỚC KHI import bất cứ thứ gì dùng config
 # load_dotenv() tìm file .env ở thư mục hiện tại hoặc thư mục cha
@@ -76,6 +77,7 @@ def create_app(test_config: dict = None) -> Flask:
         # create_all() tạo các bảng chưa tồn tại (không xóa bảng đã có)
         # Các model phải đã được import trước đây (xem models/__init__.py)
         db.create_all()
+        _migrate_supplier_offers()
         app.logger.info("✅ Bảng CSDL đã được tạo/kiểm tra xong.")
 
     # ---- Đăng ký Blueprints (routers) ----
@@ -118,6 +120,27 @@ def create_app(test_config: dict = None) -> Flask:
 
     app.logger.info(f"🚀 Ứng dụng khởi động thành công | ENV={os.getenv('FLASK_ENV', 'development')}")
     return app
+
+
+def _migrate_supplier_offers() -> None:
+    """Bổ sung cột số lượng cho bảng chào bán trên database cũ."""
+    inspector = inspect(db.engine)
+    table_names = inspector.get_table_names()
+    columns = {column["name"] for column in inspector.get_columns("supplier_offers")} if "supplier_offers" in table_names else set()
+    if "supplier_offers" in table_names and "quantity_available" not in columns:
+        db.session.execute(text(
+            "ALTER TABLE supplier_offers "
+            "ADD COLUMN quantity_available FLOAT NOT NULL DEFAULT 0"
+        ))
+        db.session.commit()
+    if "buyer_request_items" in table_names:
+        request_columns = {column["name"] for column in inspector.get_columns("buyer_request_items")}
+        if "unit_price" not in request_columns:
+            db.session.execute(text(
+                "ALTER TABLE buyer_request_items "
+                "ADD COLUMN unit_price FLOAT NOT NULL DEFAULT 0"
+            ))
+            db.session.commit()
 
 
 def _configure_app(app: Flask) -> None:
@@ -208,6 +231,12 @@ def _register_blueprints(app: Flask) -> None:
     # Module AI Features
     from app.routers.ai_features import ai_features_bp
     app.register_blueprint(ai_features_bp)
+
+    from app.routers.supplier_portal import supplier_portal_bp
+    app.register_blueprint(supplier_portal_bp)
+
+    from app.routers.buyer_portal import buyer_portal_bp
+    app.register_blueprint(buyer_portal_bp)
 
     app.logger.info("✅ Đã đăng ký tất cả Blueprint.")
 

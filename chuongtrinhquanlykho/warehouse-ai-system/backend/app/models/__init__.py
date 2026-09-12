@@ -18,3 +18,5 @@ from app.models.goods_issue import GoodsIssue, GoodsIssueItem
 from app.models.stocktake import Stocktake, StocktakeItem
 from app.models.supplier_invoice import SupplierInvoice, SupplierPayment
 from app.models.ai_interaction_log import AIInteractionLog
+from app.models.supplier_offer import SupplierOffer
+from app.models.buyer_request import BuyerRequest, BuyerRequestItem
