@@ -28,6 +28,10 @@ DELETE FROM goods_receipt_items;
 DELETE FROM goods_receipts;
 DELETE FROM purchase_order_items;
 DELETE FROM purchase_orders;
+-- Bảng bổ sung (Supplier Portal & Buyer Portal) — phải xóa trước goods/suppliers
+DELETE FROM supplier_offers;
+DELETE FROM buyer_request_items;
+DELETE FROM buyer_requests;
 DELETE FROM goods;
 DELETE FROM categories;
 DELETE FROM suppliers;

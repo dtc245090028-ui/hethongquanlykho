@@ -19,19 +19,17 @@
       overflow: hidden;
     }
 
-    /* Grid background effect */
+    /* Quiet parchment texture for the entry screen */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image:
-        linear-gradient(rgba(232,255,0,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(232,255,0,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
+      background: linear-gradient(135deg, rgba(196,137,59,0.08), transparent 42%),
+                  linear-gradient(315deg, rgba(139,94,60,0.06), transparent 48%);
       pointer-events: none;
     }
 
-    /* Glow orb */
+    /* Warm ambient accent */
     body::after {
       content: '';
       position: fixed;
@@ -40,7 +38,7 @@
       transform: translateX(-50%);
       width: 600px;
       height: 400px;
-      background: radial-gradient(ellipse, rgba(232,255,0,0.06) 0%, transparent 70%);
+      background: radial-gradient(ellipse, rgba(196,137,59,0.12) 0%, transparent 70%);
       pointer-events: none;
     }
 
@@ -64,12 +62,12 @@
       width: 52px;
       height: 52px;
       background: var(--accent-yellow);
-      color: #0d0f12;
+      color: #3b2314;
       font-size: 1.5rem;
       font-weight: 700;
       border-radius: 4px;
       margin-bottom: 1rem;
-      box-shadow: 0 0 20px rgba(232,255,0,0.3);
+      box-shadow: 0 8px 18px rgba(59,35,20,0.15);
     }
 
     .login-brand h1 {
@@ -84,7 +82,7 @@
     .login-brand p {
       font-size: 0.72rem;
       color: var(--text-muted);
-      font-family: 'Space Mono', monospace;
+      font-family: 'Manrope', sans-serif;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       margin: 0;
@@ -109,7 +107,7 @@
 
     .login-card .section-tag {
       font-size: 0.65rem;
-      font-family: 'Space Mono', monospace;
+      font-family: 'Manrope', sans-serif;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -138,7 +136,7 @@
     .btn-login {
       background: var(--accent-yellow);
       border: none;
-      color: #0d0f12;
+      color: #3b2314;
       font-weight: 700;
       font-size: 0.82rem;
       letter-spacing: 0.08em;
@@ -150,9 +148,9 @@
     }
 
     .btn-login:hover {
-      background: #f5ff40;
-      color: #0d0f12;
-      box-shadow: 0 0 20px rgba(232,255,0,0.35);
+      background: #d4a04c;
+      color: #3b2314;
+      box-shadow: 0 6px 16px rgba(139,94,60,0.2);
     }
 
     .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -163,7 +161,7 @@
       align-items: center;
       gap: 0.4rem;
       font-size: 0.65rem;
-      font-family: 'Space Mono', monospace;
+      font-family: 'Manrope', sans-serif;
       color: var(--accent-green);
       text-transform: uppercase;
       letter-spacing: 0.06em;
@@ -174,7 +172,7 @@
       background: var(--accent-green);
       border-radius: 50%;
       animation: blink 1.5s infinite;
-      box-shadow: 0 0 4px var(--accent-green);
+      box-shadow: 0 0 4px rgba(45,95,58,0.35);
     }
 
     @keyframes blink {

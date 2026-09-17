@@ -1,0 +1,10 @@
+{
+  "name": "warehouse-ai-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static HTML, JavaScript and Bootstrap frontend for the warehouse system",
+  "scripts": {
+    "start": "python -m http.server 5500",
+    "dev": "python -m http.server 5500"
+  }
+}

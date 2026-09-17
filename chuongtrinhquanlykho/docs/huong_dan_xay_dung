@@ -1,0 +1,48 @@
+Hoàn toàn hợp lý khi bạn nghĩ vậy — đồ án môn học có mục tiêu khác hẳn công ty thật: bạn cần **chứng minh mình hiểu và áp dụng đúng nguyên lý**, không cần **chịu tải thật hay chi tiền thật**. Mình lọc lại cho đúng tầm.
+
+## Bỏ qua hoàn toàn (không cần cho đồ án)
+
+- A/B testing, feature flag — cần traffic thật, vô nghĩa với vài user demo
+- Distributed tracing (OpenTelemetry), microservice phức tạp — đồ án thường chỉ cần 1-2 service, không cần
+- Cost monitoring nâng cao, load balancing, horizontal scaling — không có traffic để test
+- Công cụ trả phí (Datadog, LaunchDarkly, Pinecone bản trả phí...) — có bản free/mã nguồn mở thay thế đủ dùng
+
+## Nên có (vừa đủ để trông chuyên nghiệp, không tốn kém)
+
+**1. Cấu trúc code + git cơ bản**
+- Tách rõ frontend/backend, đặt tên thư mục hợp lý
+- Commit thường xuyên, message rõ ràng (không phải "fix", "update" chung chung)
+- README mô tả cách chạy project — giảng viên chấm sẽ đánh giá cao điểm này
+
+**2. Testing ở mức tối thiểu**
+- Vài unit test cho phần logic quan trọng (không cần coverage 100%)
+- Không cần CI/CD phức tạp, nhưng nếu dùng GitHub thì setup GitHub Actions chạy test tự động là điểm cộng lớn, miễn phí và không khó
+
+**3. Nếu có AI agent trong đồ án**
+- **Golden set nhỏ**: 10-20 case là đủ, không cần hàng trăm case như công ty. Quan trọng là bạn *có khái niệm eval* và trình bày được trong báo cáo
+- **Guardrails đơn giản**: vài rule cơ bản (chặn input rỗng, chặn câu hỏi ngoài phạm vi) — không cần thư viện chuyên dụng, tự viết vài dòng if/check là đủ để thể hiện ý tưởng
+- **RAG cơ bản** (nếu đồ án cần agent trả lời theo dữ liệu riêng): dùng vector DB miễn phí như **ChromaDB** hoặc **FAISS** (chạy local, không cần trả phí), không cần Pinecone/Weaviate
+
+**4. Logging đơn giản**
+- Chỉ cần `console.log`/file log có cấu trúc cơ bản (ghi lại request, lỗi) — không cần Grafana/Prometheus
+- Nếu muốn đẹp hơn chút, dùng thư viện log miễn phí (winston cho Node.js, logging module có sẵn của Python) là đủ
+
+**5. Bảo mật cơ bản (vẫn cần dù là đồ án)**
+- Không hardcode API key trong code — dùng file `.env`
+- Có xử lý input cơ bản (không cho SQL injection ngây thơ)
+- Đây là thứ rẻ, dễ làm, nhưng nhiều bạn sinh viên bỏ qua — làm được sẽ tạo ấn tượng tốt
+
+## Gợi ý ưu tiên cho đồ án (theo thứ tự công sức/lợi ích)
+
+1. Git + README rõ ràng — gần như miễn phí công sức, ảnh hưởng điểm nhiều
+2. .env cho secrets — 5 phút làm, tránh lỗi ngớ ngẩn
+3. Vài unit test cơ bản — thể hiện tư duy testing
+4. Golden set nhỏ (nếu có AI agent) — thể hiện tư duy đánh giá, đây là điểm nhiều đồ án khác thiếu
+5. Guardrails đơn giản — vài dòng code, nhưng thể hiện bạn hiểu vấn đề an toàn AI
+6. GitHub Actions chạy test tự động — nếu còn thời gian, đây là điểm cộng "trông chuyên nghiệp" rất rõ
+
+## Điều quan trọng nhất cho đồ án môn học
+
+Giảng viên thường đánh giá cao việc bạn **hiểu tại sao cần làm** hơn là **làm đủ mọi thứ**. Vậy nên trong báo cáo, dù bạn chỉ làm golden set 15 case, hãy giải thích rõ: "vì giới hạn tài nguyên nên em chọn quy mô nhỏ, nhưng đây là nguyên lý áp dụng ở quy mô lớn hơn sẽ là..." — điều này thể hiện bạn hiểu bản chất, không chỉ copy kỹ thuật.
+
+Bạn có thể cho mình biết đồ án của bạn là loại hệ thống gì (web bán hàng, quản lý, chatbot...) và có agent AI trong đó không? Mình sẽ gợi ý cụ thể hơn cái nào nên làm trước.
