@@ -1,14 +1,18 @@
 ﻿Hệ thống quản lý kho có tích hợp AI
-1. Mô tả bài toánag
+1. Mô tả bài toán
 
 Doanh nghiệp nhỏ cần quản lý hàng hóa, nhà cung cấp, nhập kho, xuất kho, tồn kho và cảnh báo hàng sắp hết. Quản lý bằng bảng tính dễ sai lệch số lượng, khó truy vết giao dịch và chậm phát hiện bất thường. Đề tài yêu cầu xây dựng hệ thống quản lý kho có tích hợp AI sinh báo cáo nhập xuất tồn, tóm tắt biến động kho và gợi ý nhập hàng.
-2. Mục tiêu
 
+
+2. Mục tiêu
 - Xây dựng hệ thống quản lý hàng hóa, nhà cung cấp, phiếu nhập, phiếu xuất và tồn kho.
 - Tích hợp AI để sinh báo cáo nhập xuất tồn, phát hiện biến động đáng chú ý và gợi ý nhập hàng.
 - Sử dụng AI trong SDLC để thiết kế nghiệp vụ kho, sinh mã, kiểm thử và tài liệu.
 - Đảm bảo số liệu kho nhất quán và có thể truy vết.
+
+
 3. Yêu cầu chức năng
+
 3.1. Chức năng quản lý
 1. Đăng nhập và phân quyền quản trị viên, thủ kho, kế toán.
 2. Quản lý hàng hóa, nhóm hàng, đơn vị tính, tồn tối thiểu.
@@ -18,10 +22,13 @@ Doanh nghiệp nhỏ cần quản lý hàng hóa, nhà cung cấp, nhập kho, x
 6. Tra cứu lịch sử nhập xuất theo hàng hóa, thời gian, nhà cung cấp.
 7. Cảnh báo hàng dưới tồn tối thiểu.
 8. Thống kê nhập xuất tồn và xuất báo cáo.
+
 3.2. Chức năng AI
 1. AI sinh báo cáo nhập xuất tồn theo tháng từ dữ liệu kho.
 2. AI gợi ý nhập hàng dựa trên tồn kho, mức tồn tối thiểu và tốc độ xuất.
 3. AI tóm tắt biến động bất thường, ví dụ xuất tăng đột biến hoặc hàng tồn lâu.
+
+
 4. Yêu cầu kỹ thuật
 
 - Backend: FastAPI/Flask/Django.
@@ -31,6 +38,8 @@ Doanh nghiệp nhỏ cần quản lý hàng hóa, nhà cung cấp, nhập kho, x
 - Có giao dịch CSDL để đảm bảo cập nhật tồn kho đúng.
 - Có prompt template cho báo cáo kho và gợi ý nhập hàng.
 - Có test cho nhập, xuất, tồn kho âm và báo cáo AI.
+
+
 5. Dữ liệu đầu vào, đầu ra và dữ liệu hệ thống
 
 - Dữ liệu chính: hàng hóa, nhóm hàng, nhà cung cấp, phiếu nhập, phiếu xuất, tồn kho.

@@ -29,12 +29,14 @@ Phân quyền:
 """
 
 import pytest
+from datetime import datetime
 from app.main import create_app
 from app.extensions import db
 from app.models.user import User
 from app.models.goods import Goods
 from app.models.category import Category
 from app.models.supplier import Supplier
+from app.models.goods_issue import GoodsIssue
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +144,46 @@ def manager_token(client):
         "password": "Password@123"
     })
     return res.get_json()["access_token"]
+
+
+def test_duplicate_issue_request_is_processed_twice(client, keeper_token, app):
+    """Cùng payload xuất hai lần tạo hai phiếu và trừ tồn hai lần."""
+    payload = {"items": [{"goods_id": 1, "quantity": 30}]}
+    headers = {
+        "Authorization": f"Bearer {keeper_token}",
+        "Idempotency-Key": "issue-test-duplicate-001",
+    }
+
+    first = client.post("/api/goods-issues", json=payload, headers=headers)
+    second = client.post("/api/goods-issues", json=payload, headers=headers)
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+
+    with app.app_context():
+        assert GoodsIssue.query.count() == 2
+        assert db.session.get(Goods, 1).quantity_on_hand == 40
+
+
+def test_issue_schema_allows_duplicate_business_fields(app):
+    """Schema không chặn hai header xuất có cùng các trường nghiệp vụ hiện có."""
+    with app.app_context():
+        issued_date = datetime(2026, 9, 17, 10, 0, 0)
+        first = GoodsIssue(
+            created_by=1,
+            issued_date=issued_date,
+            note="duplicate-schema-test",
+        )
+        second = GoodsIssue(
+            created_by=1,
+            issued_date=issued_date,
+            note="duplicate-schema-test",
+        )
+
+        db.session.add_all([first, second])
+        db.session.commit()
+
+        assert GoodsIssue.query.count() == 2
 
 
 def auth_header(token):

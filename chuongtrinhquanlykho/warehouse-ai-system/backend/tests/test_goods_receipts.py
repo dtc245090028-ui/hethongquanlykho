@@ -25,6 +25,8 @@ Phân quyền:
   - Không có token → 401 TOKEN_MISSING
 """
 
+from datetime import datetime
+
 import pytest
 from app.main import create_app
 from app.extensions import db
@@ -33,6 +35,7 @@ from app.models.goods import Goods
 from app.models.category import Category
 from app.models.supplier import Supplier
 from app.models.purchase_order import PurchaseOrder, PurchaseOrderItem
+from app.models.goods_receipt import GoodsReceipt
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +171,47 @@ def valid_receipt_payload(supplier_id=1, goods_id=1, quantity=20, unit_price=500
     }
     payload.update(kwargs)
     return payload
+
+
+def test_duplicate_receipt_request_is_processed_twice(client, keeper_headers, app):
+    """Cùng payload nhập hai lần tạo hai phiếu và cộng tồn hai lần."""
+    payload = valid_receipt_payload(quantity=20)
+    headers = {**keeper_headers, "Idempotency-Key": "receipt-test-duplicate-001"}
+
+    first = client.post("/api/goods-receipts", json=payload, headers=headers)
+    second = client.post("/api/goods-receipts", json=payload, headers=headers)
+
+    assert first.status_code == 201
+    assert second.status_code == 201
+
+    with app.app_context():
+        assert GoodsReceipt.query.count() == 2
+        assert db.session.get(Goods, 1).quantity_on_hand == 90
+
+
+def test_receipt_schema_allows_duplicate_business_fields(app):
+    """Schema không chặn hai header nhập có cùng các trường nghiệp vụ hiện có."""
+    with app.app_context():
+        received_date = datetime(2026, 9, 17, 10, 0, 0)
+        first = GoodsReceipt(
+            supplier_id=1,
+            po_id=1,
+            created_by=1,
+            received_date=received_date,
+            note="duplicate-schema-test",
+        )
+        second = GoodsReceipt(
+            supplier_id=1,
+            po_id=1,
+            created_by=1,
+            received_date=received_date,
+            note="duplicate-schema-test",
+        )
+
+        db.session.add_all([first, second])
+        db.session.commit()
+
+        assert GoodsReceipt.query.count() == 2
 
 
 # ===========================================================================

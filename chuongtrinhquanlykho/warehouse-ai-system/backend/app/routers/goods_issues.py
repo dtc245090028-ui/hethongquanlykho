@@ -28,6 +28,7 @@ from app.models.goods_issue import GoodsIssue, GoodsIssueItem
 from app.models.goods import Goods
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
+from sqlalchemy import update
 
 # Blueprint đặt url_prefix chuẩn theo api_contract.md
 goods_issues_bp = Blueprint(
@@ -107,19 +108,29 @@ def create_goods_issue_transaction(
         normalized_items.append((goods_id, quantity))
         quantity_total_per_goods[goods_id] += quantity
 
-    for goods_id, total_quantity in quantity_total_per_goods.items():
-        goods = goods_map[goods_id]
-        if total_quantity > goods.quantity_on_hand:
-            raise GoodsIssueError(
-                "INSUFFICIENT_STOCK",
-                (
-                    f"Hàng hóa '{goods.name}' (SKU: {goods.sku}): số lượng xuất "
-                    f"yêu cầu ({total_quantity} {goods.unit}) vượt quá tồn kho "
-                    f"hiện tại ({goods.quantity_on_hand} {goods.unit})"
-                ),
-            )
-
     try:
+        for goods_id, total_quantity in quantity_total_per_goods.items():
+            goods = goods_map[goods_id]
+            stock_update = db.session.execute(
+                update(Goods)
+                .where(
+                    Goods.id == goods_id,
+                    Goods.status == "active",
+                    Goods.quantity_on_hand >= total_quantity,
+                )
+                .values(
+                    quantity_on_hand=Goods.quantity_on_hand - total_quantity,
+                )
+            )
+            if stock_update.rowcount != 1:
+                raise GoodsIssueError(
+                    "INSUFFICIENT_STOCK",
+                    (
+                        f"Hàng hóa '{goods.name}' (SKU: {goods.sku}): số lượng xuất "
+                        f"yêu cầu ({total_quantity} {goods.unit}) vượt quá tồn kho"
+                    ),
+                )
+
         issue = GoodsIssue(
             created_by=user_id,
             issued_date=issued_date,
@@ -134,12 +145,6 @@ def create_goods_issue_transaction(
                 goods_id=goods_id,
                 quantity=quantity,
             ))
-            goods_map[goods_id].quantity_on_hand -= quantity
-            if goods_map[goods_id].quantity_on_hand < 0:
-                raise GoodsIssueError(
-                    "INSUFFICIENT_STOCK",
-                    f"Tồn kho không đủ cho hàng hóa ID {goods_id}",
-                )
 
         if commit:
             db.session.commit()

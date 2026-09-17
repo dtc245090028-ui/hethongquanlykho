@@ -129,21 +129,35 @@ User: Dữ liệu nhập xuất tồn tháng này: {{inventory_report}}. Hãy si
 
 | Bảng | Trường chính (PK/FK) | Ghi chú |
 |---|---|---|
-| `users` | id (PK), role, username, password_hash | role: admin / warehouse_manager / warehouse_keeper |
-| `suppliers` | id (PK) | name, contact_person, phone, email, address, tax_code, status |
-| `categories` | id (PK) | tên danh mục/nhóm hàng |
-| `goods` | id (PK), category_id (FK→categories), preferred_supplier_id (FK→suppliers, nullable) | sku, name, unit, min_stock, max_stock, quantity_on_hand, selling_price, description, image_url, status |
-| `purchase_orders` | id (PK), supplier_id (FK→suppliers), created_by (FK→users) | order_date, status |
-| `purchase_order_items` | id (PK), po_id (FK), goods_id (FK) | quantity_ordered, unit_price |
-| `goods_receipts` | id (PK), po_id (FK, nullable), supplier_id (FK), created_by (FK→users) | received_date, note |
-| `goods_receipt_items` | id (PK), receipt_id (FK), goods_id (FK) | quantity, unit_price (giá nhập lần này — nguồn lịch sử giá) |
-| `goods_issues` | id (PK), created_by (FK→users) | issued_date, note |
-| `goods_issue_items` | id (PK), issue_id (FK), goods_id (FK) | quantity |
-| `stocktakes` | id (PK), created_by (FK→users), approved_by (FK→users, nullable) | stocktake_date, status |
-| `stocktake_items` | id (PK), stocktake_id (FK), goods_id (FK) | system_quantity, actual_quantity, difference, action |
-| `supplier_invoices` | id (PK), supplier_id (FK), receipt_id (FK, nullable) | invoice_number, issue_date, total_amount, payment_status |
-| `supplier_payments` | id (PK), invoice_id (FK) | amount, payment_date, method |
-| `ai_interaction_logs` | id (PK), feature_type, user_id (FK) | prompt_input (rút gọn), ai_response, model_used, created_at |
+| `users` | id (PK) | username, full_name, email, role, password_hash, is_active, created_at. `role`: admin / warehouse_manager / warehouse_keeper |
+| `suppliers` | id (PK) | name, contact_person, phone, email, address, tax_code, notes, status, created_at, updated_at |
+| `categories` | id (PK) | name |
+| `goods` | id (PK), category_id (FK->categories), preferred_supplier_id (FK->suppliers, nullable) | sku, name, unit, min_stock, max_stock, quantity_on_hand, selling_price, description, image_url, status, created_at, updated_at |
+| `purchase_orders` | id (PK), supplier_id (FK->suppliers), created_by (FK->users) | order_date, status, created_at, updated_at |
+| `purchase_order_items` | id (PK), po_id (FK->purchase_orders), goods_id (FK->goods) | quantity_ordered, unit_price (nullable trong model hien tai) |
+| `goods_receipts` | id (PK), po_id (FK->purchase_orders, nullable), supplier_id (FK->suppliers), created_by (FK->users) | received_date, note, created_at, updated_at |
+| `goods_receipt_items` | id (PK), receipt_id (FK->goods_receipts), goods_id (FK->goods) | quantity, unit_price (gia nhap tung lan - nguon lich su gia) |
+| `goods_issues` | id (PK), created_by (FK->users) | issued_date, note, created_at, updated_at |
+| `goods_issue_items` | id (PK), issue_id (FK->goods_issues), goods_id (FK->goods) | quantity |
+| `stocktakes` | id (PK), created_by (FK->users), approved_by (FK->users, nullable) | stocktake_date, status, note, created_at, updated_at |
+| `stocktake_items` | id (PK), stocktake_id (FK->stocktakes), goods_id (FK->goods) | system_quantity, actual_quantity, difference, action |
+| `supplier_invoices` | id (PK), supplier_id (FK->suppliers), receipt_id (FK->goods_receipts, nullable, unique) | invoice_number, issue_date, total_amount, payment_status, created_at, updated_at |
+| `supplier_payments` | id (PK), invoice_id (FK->supplier_invoices) | amount, payment_date, method |
+| `ai_interaction_logs` | id (PK), feature_type, user_id (FK->users, nullable) | prompt_input (rut gon), ai_response, model_used, created_at |
+
+Phạm vi ERD hiện tại giữ nguyên 16 bảng trên. Các bảng mở rộng `buyer_requests`,
+`buyer_request_items` và `supplier_offers` đã có trong code nhưng tạm thời không
+đưa vào ERD chuẩn của tài liệu.
+
+Một số khác biệt triển khai cần ghi nhận:
+
+- `purchase_order_items.unit_price` đang cho phép `NULL` trong model; nếu đơn đặt
+  hàng bắt buộc phải có đơn giá thì nên đổi thành `nullable=False`.
+- `stocktakes.status`, `stocktake_items.action` và
+  `supplier_invoices.payment_status` hiện dùng `String`, chưa có enum hoặc
+  database constraint tương ứng.
+- Các cột `created_at` và `updated_at` được dùng cho audit/vận hành ở nhiều bảng,
+  nên được thể hiện trong thiết kế database thực tế.
 
 ### 6.2. Sơ đồ quan hệ (Mermaid — dán vào tài liệu để render trực tiếp)
 
@@ -155,11 +169,13 @@ erDiagram
     USERS ||--o{ STOCKTAKES : "thực hiện"
     USERS ||--o{ AI_INTERACTION_LOGS : "gọi AI"
     CATEGORIES ||--o{ GOODS : "phân nhóm"
+    SUPPLIERS ||--o{ GOODS : "cung cấp ưu tiên"
     SUPPLIERS ||--o{ PURCHASE_ORDERS : "nhận đơn"
     SUPPLIERS ||--o{ GOODS_RECEIPTS : "giao hàng"
     SUPPLIERS ||--o{ SUPPLIER_INVOICES : "xuất hóa đơn"
     PURCHASE_ORDERS ||--o{ PURCHASE_ORDER_ITEMS : "gồm"
     GOODS ||--o{ PURCHASE_ORDER_ITEMS : "được đặt"
+    PURCHASE_ORDERS ||--o{ GOODS_RECEIPTS : "được nhận hàng"
     GOODS_RECEIPTS ||--o{ GOODS_RECEIPT_ITEMS : "gồm"
     GOODS ||--o{ GOODS_RECEIPT_ITEMS : "được nhập"
     GOODS_ISSUES ||--o{ GOODS_ISSUE_ITEMS : "gồm"

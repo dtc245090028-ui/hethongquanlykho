@@ -7,9 +7,13 @@
 > Chuẩn chung mọi API:
 > - Base path: `/api`
 > - Response lỗi: `{"error_code": "...", "message": "..."}`  (xem AGENTS.md mục 8)
-> - Danh sách (GET nhiều bản ghi) luôn hỗ trợ `?page=&page_size=`
+> - Endpoint danh sách có hỗ trợ phân trang sẽ ghi rõ `?page=&page_size=`
 > - Auth: header `Authorization: Bearer <JWT>` (trừ endpoint đăng nhập)
 > - Ngày giờ: ISO 8601 (`YYYY-MM-DDTHH:mm:ssZ`)
+
+> Lưu ý: chỉ các endpoint có ghi rõ trong từng mục mới hỗ trợ phân trang. Một số
+> endpoint danh sách danh mục và portal trả toàn bộ dữ liệu, không có `page`/
+> `page_size`.
 
 ---
 
@@ -24,9 +28,11 @@
 | Goods Receipts (Phiếu nhập) | ✅ Đã code (2026-08-12) |
 | Goods Issues (Phiếu xuất) | ✅ Đã code (2026-08-14) |
 | Stocktakes (Kiểm kê) | ✅ Đã code (2026-08-18) |
-| Supplier Invoices & Payments (Công nợ) | ✅ Đã code(2026-08-18) |
+| Supplier Invoices & Payments (Công nợ) | ✅ Đã code (2026-08-18) |
 | Reports (Thống kê/báo cáo) | ✅ Đã code (2026-08-20) |
 | AI Features | ✅ Đã code (2026-08-20) |
+| Supplier Portal | ✅ Đã code(2026-08-30) |
+| Buyer Portal | ✅ Đã code (2026-08-30)|
 
 Đổi ⬜ → ✅ khi module đã code xong và endpoint khớp đúng với mục dưới đây.
 
@@ -143,9 +149,6 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
 **Response `GET /api/suppliers` (200 - Phân trang)**
 ```json
 {
-  "total": 100,
-  "page": 1,
-  "page_size": 20,
   "data": [
     {
       "id": 1,
@@ -157,7 +160,13 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
       "tax_code": "0312345678",
       "status": "active"
     }
-  ]
+  ],
+  "pagination": {
+    "page": 1,
+    "page_size": 20,
+    "total": 100,
+    "total_pages": 5
+  }
 }
 ```
 
@@ -244,15 +253,16 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
 
 | Method | Path | Mô tả | Role |
 |---|---|---|---|
-| GET | `/api/purchase-orders` | Danh sách, filter `?status=&supplier_id=` | Thủ kho, Quản lý kho |
-| POST | `/api/purchase-orders` | Tạo PO | Thủ kho |
-| GET | `/api/purchase-orders/{id}` | Chi tiết + items | Thủ kho, Quản lý kho |
-| PUT | `/api/purchase-orders/{id}/status` | Cập nhật trạng thái | Thủ kho |
+| GET | `/api/purchase-orders` | Danh sách, filter `?status=&supplier_id=` | `admin`, `warehouse_keeper`, `warehouse_manager` |
+| POST | `/api/purchase-orders` | Tạo PO | `admin`, `warehouse_keeper` |
+| GET | `/api/purchase-orders/{id}` | Chi tiết + items | `admin`, `warehouse_keeper`, `warehouse_manager` |
+| PUT | `/api/purchase-orders/{id}/status` | Cập nhật trạng thái | `admin`, `warehouse_keeper` |
 
 **Request `POST /api/purchase-orders`**
 ```json
 {
   "supplier_id": 2,
+  "buyer_request_id": 7,
   "order_date": "2026-08-09T16:00:00Z",
   "items": [
     {
@@ -263,7 +273,9 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
   ]
 }
 ```
-*(Yêu cầu: `quantity_ordered` > 0 cho mọi item)*
+`buyer_request_id` là tùy chọn; nếu có, các mặt hàng, số lượng và đơn giá phải
+khớp yêu cầu mua hàng đang ở trạng thái "chờ xử lý". Yêu cầu sẽ chuyển sang
+"đã tạo đơn" sau khi tạo PO. `quantity_ordered` phải lớn hơn 0 cho mọi item.
 
 **Response 200 / 201 (Chi tiết Purchase Order mới tạo)**
 ```json
@@ -319,9 +331,9 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
 
 | Method | Path | Mô tả | Role |
 |---|---|---|---|
-| GET | `/api/goods-receipts` | Danh sách, filter `?supplier_id=&date_from=&date_to=&po_id=` | Thủ kho, Quản lý kho |
-| POST | `/api/goods-receipts` | Lập phiếu nhập (transaction, cập nhật tồn) | Thủ kho |
-| GET | `/api/goods-receipts/{id}` | Chi tiết | Thủ kho, Quản lý kho |
+| GET | `/api/goods-receipts` | Danh sách, filter `?supplier_id=&date_from=&date_to=&po_id=` | `admin`, `warehouse_keeper`, `warehouse_manager` |
+| POST | `/api/goods-receipts` | Lập phiếu nhập (transaction, cập nhật tồn) | `admin`, `warehouse_keeper` |
+| GET | `/api/goods-receipts/{id}` | Chi tiết | `admin`, `warehouse_keeper`, `warehouse_manager` |
 
 **Request `POST /api/goods-receipts`**
 ```json
@@ -409,9 +421,9 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
 
 | Method | Path | Mô tả | Role |
 |---|---|---|---|
-| GET | `/api/goods-issues` | Danh sách, filter `?date_from=&date_to=` | Thủ kho, Quản lý kho |
-| POST | `/api/goods-issues` | Lập phiếu xuất (chặn xuất vượt tồn) | Thủ kho |
-| GET | `/api/goods-issues/{id}` | Chi tiết | Thủ kho, Quản lý kho |
+| GET | `/api/goods-issues` | Danh sách, filter `?date_from=&date_to=` | `admin`, `warehouse_keeper`, `warehouse_manager` |
+| POST | `/api/goods-issues` | Lập phiếu xuất (chặn xuất vượt tồn) | `admin`, `warehouse_keeper` |
+| GET | `/api/goods-issues/{id}` | Chi tiết | `admin`, `warehouse_keeper`, `warehouse_manager` |
 
 **Request `POST /api/goods-issues`**
 ```json
@@ -551,7 +563,7 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
 | 400 | `MISSING_FIELDS` | `items` rỗng hoặc thiếu |
 | 400 | `INVALID_QUANTITY` | `actual_quantity` < 0 trong bất kỳ dòng nào |
 | 400 | `INVALID_STATUS` | Hành động không hợp lệ ở trạng thái hiện tại |
-| 403 | `UNAUTHORIZED_ACTION` | Không có quyền (ví dụ: Thủ kho cố duyệt phiếu) |
+| 403 | `FORBIDDEN` | Không có quyền (ví dụ: Thủ kho cố duyệt phiếu) |
 | 404 | `GOODS_NOT_FOUND` | Không tìm thấy hàng hóa |
 | 404 | `STOCKTAKE_NOT_FOUND` | Không tìm thấy phiếu kiểm kê |
 
@@ -562,7 +574,7 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
 | Method | Path | Mô tả | Role |
 |---|---|---|---|
 | GET | `/api/supplier-invoices` | Danh sách, filter `?supplier_id=&payment_status=` | Quản lý kho, Ban điều hành |
-| POST | `/api/supplier-invoices` | Tạo hóa đơn từ phiếu nhập | Thủ kho, Quản lý kho |
+| POST | `/api/supplier-invoices` | Tạo hóa đơn từ phiếu nhập | `admin`, `warehouse_keeper`, `warehouse_manager` |
 | GET | `/api/supplier-invoices/{id}` | Chi tiết hóa đơn + lịch sử thanh toán | Quản lý kho, Ban điều hành |
 | POST | `/api/supplier-payments` | Ghi nhận thanh toán → tự cập nhật payment_status | Quản lý kho, Ban điều hành |
 
@@ -676,6 +688,99 @@ Request tạo/cập nhật: `{ "name": "string (bắt buộc, duy nhất)" }`.
 | 404 | `INVOICE_NOT_FOUND` | Không tìm thấy hóa đơn |
 
 > **Ràng buộc quan trọng**: `paid_amount` không lưu trực tiếp trong bảng mà được tính tổng từ `supplier_payments.amount` mỗi khi cần; `payment_status` cập nhật tự động trong transaction mỗi khi ghi nhận thanh toán. Không cho phép sửa/xóa hóa đơn hay lịch sử thanh toán sau khi đã tạo — chỉ được thêm mới.
+
+---
+
+## 8A. Supplier Portal (Cổng nhà cung cấp)
+
+Supplier Portal dùng JWT riêng cho role `supplier`. Token được cấp bởi
+`POST /api/supplier-portal/login` và chứa `supplier_id`.
+
+| Method | Path | Mô tả | Auth / Role |
+|---|---|---|---|
+| GET | `/api/supplier-portal/suppliers` | Danh sách nhà cung cấp đang hoạt động để chọn khi đăng nhập | Public |
+| POST | `/api/supplier-portal/login` | Đăng nhập bằng `supplier_id` và số điện thoại | Public |
+| GET | `/api/supplier-portal/catalog` | Catalog hàng hóa thuộc nhà cung cấp ưu tiên | JWT role `supplier` |
+| POST | `/api/supplier-portal/offers` | Gửi chào giá/chào bán | JWT role `supplier` |
+| GET | `/api/supplier-portal/offers` | Danh sách chào bán để bộ phận kho xem | JWT role `admin`, `warehouse_manager` |
+
+**Request `POST /api/supplier-portal/login`**
+```json
+{ "supplier_id": 1, "phone": "0901234567" }
+```
+
+**Response 200**
+```json
+{
+  "access_token": "string",
+  "role": "supplier",
+  "supplier": { "id": 1, "name": "Công ty TNHH ABC" }
+}
+```
+
+**Request `POST /api/supplier-portal/offers`**
+```json
+{
+  "goods_id": 5,
+  "quantity_available": 100,
+  "proposed_price": 50000.0,
+  "price_reason": "string (tùy chọn)"
+}
+```
+Có thể bỏ `goods_id` để chào một mặt hàng mới; khi đó bắt buộc gửi thêm
+`product_name` và `unit`. `quantity_available` phải lớn hơn 0 và
+`proposed_price` không được âm.
+
+**Response chào bán 201**
+```json
+{
+  "id": 1,
+  "supplier_id": 1,
+  "goods_id": 5,
+  "product_name": "Sản phẩm A",
+  "unit": "Cái",
+  "quantity_available": 100.0,
+  "proposed_price": 50000.0,
+  "price_reason": null,
+  "created_at": "2026-08-20T10:00:00"
+}
+```
+
+**Error codes chính:** `INVALID_CREDENTIALS` (401), `FORBIDDEN` (403),
+`INVALID_QUANTITY`, `INVALID_GOODS`, `INVALID_PRICE`, `MISSING_FIELDS` (400).
+
+## 8B. Buyer Portal (Cổng yêu cầu mua hàng)
+
+Buyer Portal là cổng public, không yêu cầu đăng nhập khi gửi yêu cầu. Nhân viên
+kho phải dùng JWT để xem và xác nhận yêu cầu.
+
+| Method | Path | Mô tả | Auth / Role |
+|---|---|---|---|
+| GET | `/api/buyer-portal/buyers` | Danh sách doanh nghiệp mẫu | Public, không phân trang |
+| GET | `/api/buyer-portal/catalog` | Catalog hàng hóa đang hoạt động | Public, không phân trang |
+| POST | `/api/buyer-portal/requests` | Gửi yêu cầu mua hàng | Public |
+| GET | `/api/buyer-portal/requests` | Xem các yêu cầu mua hàng | `admin`, `warehouse_keeper`, `warehouse_manager` |
+| POST | `/api/buyer-portal/requests/{id}/confirm` | Kiểm tra yêu cầu và chọn nhà cung cấp trước khi tạo PO | `admin`, `warehouse_keeper` |
+
+**Request `POST /api/buyer-portal/requests`**
+```json
+{
+  "buyer_name": "Công ty TNHH ABC",
+  "items": [
+    { "goods_id": 5, "quantity": 10, "unit_price": 50000.0 }
+  ]
+}
+```
+
+**Request `POST /api/buyer-portal/requests/{id}/confirm`**
+```json
+{ "supplier_id": 1 }
+```
+Endpoint này chỉ kiểm tra yêu cầu và trả thông tin nhà cung cấp; việc tạo PO
+được thực hiện tiếp trong endpoint Purchase Orders.
+
+**Error codes chính:** `MISSING_FIELDS`, `INVALID_ITEM`, `REQUEST_NOT_FOUND`,
+`INVALID_STATUS`, `INVALID_SUPPLIER`.
 
 ---
 
@@ -837,36 +942,6 @@ Hàng chưa có lần nhập nào → `avg_cost = 0`.
 | 403 | `FORBIDDEN` | Không đủ quyền (warehouse_keeper không được gọi) |
 
 
-
----
-
-## 10. AI Features
-
-| Method | Path | Mô tả | Role |
-|---|---|---|---|
-| POST | `/api/ai/inventory-report` | Sinh báo cáo nhập-xuất-tồn | Quản lý kho, Ban điều hành |
-| POST | `/api/ai/reorder-suggestion` | Gợi ý nhập hàng | Thủ kho, Quản lý kho |
-
-**Response `/api/ai/inventory-report`** (theo mục 8.1 Prompt.md)
-```json
-{
-  "summary": "string",
-  "low_stock_items": [{ "sku": "string", "current_qty": 0, "min_stock": 0 }],
-  "notable_changes": [{ "sku": "string", "note": "string" }]
-}
-```
-
-**Response `/api/ai/reorder-suggestion`** (theo mục 8.2 Prompt.md)
-```json
-{
-  "reorder_suggestions": [
-    { "sku": "string", "suggested_quantity": 0, "reason": "string" }
-  ]
-}
-```
-
-Lỗi định dạng/timeout → trả `error_code: "AI_RESPONSE_INVALID"` hoặc
-`"AI_TIMEOUT"`, không crash, không hiển thị dữ liệu rác (theo mục 8.4).
 
 ---
 

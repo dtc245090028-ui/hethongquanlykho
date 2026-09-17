@@ -33,6 +33,7 @@ from app.models.purchase_order import PurchaseOrder
 from app.models.supplier_offer import SupplierOffer
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.decorators import roles_required
+from sqlalchemy import update
 
 # Blueprint đặt url_prefix chuẩn theo api_contract.md
 goods_receipts_bp = Blueprint(
@@ -354,10 +355,12 @@ def create_goods_receipt():
             )
             db.session.add(receipt_item)
 
-            # Cộng tồn kho — cập nhật trực tiếp cột quantity_on_hand
-            # Dùng đối tượng Goods đã load sẵn trong goods_map (tránh query lại)
-            goods_obj = goods_map[goods_id]
-            goods_obj.quantity_on_hand += quantity
+            # Cộng tồn kho trực tiếp trong DB để concurrent updates không bị mất.
+            db.session.execute(
+                update(Goods)
+                .where(Goods.id == goods_id, Goods.status == "active")
+                .values(quantity_on_hand=Goods.quantity_on_hand + quantity)
+            )
 
         if offer is not None:
             db.session.delete(offer)
