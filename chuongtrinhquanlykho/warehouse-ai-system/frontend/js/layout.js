@@ -35,22 +35,105 @@ function prepareLazyContent(root) {
   });
 }
 
-function loadContentIntoShell(url) {
-  const pageContent = document.getElementById('page-content');
-  if (!pageContent) return Promise.resolve();
+/* =====================================================
+   SPA Shell State Management & Helpers
+   ===================================================== */
+let isShellLoading = false;
+let isNavigationBound = false;
+let currentAbortController = null;
+let pendingPageInits = [];
 
+/* Đăng ký callback khởi tạo cho trang con được nạp qua shell */
+window.__registerPageInit = function (callback) {
+  if (typeof callback === 'function') {
+    pendingPageInits.push(callback);
+  }
+};
+
+/* Cập nhật active link trên sidebar menu */
+function updateActiveSidebarLink(urlPath) {
+  const currentPath = (urlPath || window.location.pathname).split('?')[0];
+  document.querySelectorAll('#sidebar nav a').forEach(item => {
+    const href = item.getAttribute('href');
+    if (!href) return;
+    const itemPath = href.split('?')[0];
+    if (
+      currentPath === itemPath ||
+      currentPath.endsWith(itemPath) ||
+      ((itemPath === '/dashboard.html' || itemPath === 'dashboard.html') &&
+        (currentPath === '/' || currentPath.endsWith('index.html') || currentPath.endsWith('dashboard.html')))
+    ) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+}
+
+/* Đóng tất cả modal Bootstrap và xóa backdrop cũ */
+function cleanupModalsAndBackdrops() {
+  try {
+    document.querySelectorAll('.modal.show').forEach(modalEl => {
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+    });
+  } catch (_) {}
+  document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+  document.body.classList.remove('modal-open');
+  document.body.style.removeProperty('padding-right');
+  document.body.style.removeProperty('overflow');
+}
+
+/* Nạp nội dung trang con vào Shell an toàn, không kích hoạt lại DOMContentLoaded toàn cục */
+async function loadContentIntoShell(url, pushState = true) {
+  const pageContent = document.getElementById('page-content');
+  if (!pageContent) return;
+
+  // Chốt chặn chống spam request / double-fetch
+  if (isShellLoading) return;
+  isShellLoading = true;
+
+  // Hủy tác vụ fetch cũ nếu đang chạy
+  if (currentAbortController) {
+    currentAbortController.abort();
+  }
+  currentAbortController = new AbortController();
+
+  cleanupModalsAndBackdrops();
+
+  // Dọn dẹp DOM cũ được inject từ lần trước
   document.querySelectorAll('[data-shell-injected="true"]').forEach(node => node.remove());
   document.querySelectorAll('script[data-shell-script="true"]').forEach(node => node.remove());
+
+  // Reset hàm khởi tạo trang con
+  window.initPage = null;
+  pendingPageInits = [];
 
   const markInjectedNode = (node) => {
     node.setAttribute('data-shell-injected', 'true');
     return node;
   };
 
+  const targetBaseUrl = new URL(url, window.location.origin);
+  const CORE_SCRIPTS = ['bootstrap', 'api.js', 'auth.js', 'utils.js', 'layout.js'];
+  const isCoreScript = (src) => {
+    if (!src) return false;
+    return CORE_SCRIPTS.some(core => src.toLowerCase().includes(core.toLowerCase()));
+  };
+
   const executeFetchedScripts = async (scripts) => {
     for (const script of scripts) {
-      if (script.src) {
-        const scriptUrl = new URL(script.src, window.location.href).href;
+      const rawSrc = script.getAttribute('src');
+      if (rawSrc) {
+        // Bỏ qua các script cốt lõi đã nạp sẵn trong shell
+        if (isCoreScript(rawSrc)) {
+          continue;
+        }
+
+        // Tính URL tuyệt đối dựa trên URL của trang nguồn được nạp
+        const scriptUrl = new URL(rawSrc, targetBaseUrl).href;
         const alreadyLoaded = Array.from(document.scripts).some(existing => {
           return existing.src && new URL(existing.src, window.location.href).href === scriptUrl;
         });
@@ -60,93 +143,162 @@ function loadContentIntoShell(url) {
         await new Promise((resolve, reject) => {
           const newScript = document.createElement('script');
           newScript.setAttribute('data-shell-script', 'true');
-          newScript.src = script.src;
+          newScript.src = scriptUrl;
           newScript.async = false;
           newScript.onload = () => resolve();
-          newScript.onerror = () => reject(new Error(`Không tải được script: ${script.src}`));
+          newScript.onerror = () => reject(new Error(`Không tải được script: ${scriptUrl}`));
           document.body.appendChild(newScript);
         });
       } else {
         const newScript = document.createElement('script');
         newScript.setAttribute('data-shell-script', 'true');
-        newScript.textContent = `(function() {\n${script.textContent}\n})();`;
+        // Tương thích an toàn: Thay thế addEventListener('DOMContentLoaded'...) bằng window.__registerPageInit
+        // để không phụ thuộc và không kích hoạt lại DOMContentLoaded toàn cục
+        const transformedCode = script.textContent.replace(
+          /document\.addEventListener\(\s*['"]DOMContentLoaded['"]\s*,/g,
+          'window.__registerPageInit('
+        );
+        newScript.textContent = `(function() {\n${transformedCode}\n})();`;
         document.body.appendChild(newScript);
       }
     }
   };
 
-  return fetch(url, { headers: { 'X-Requested-With': 'fetch' } })
-    .then(async response => {
-      if (!response.ok) {
-        throw new Error(`Không tải được trang: ${response.status}`);
-      }
-      const html = await response.text();
-      const fetchedDocument = new DOMParser().parseFromString(html, 'text/html');
-      const fetchedBody = fetchedDocument.body;
-
-      const fetchedMain = fetchedDocument.querySelector('main#page-content') || fetchedDocument.querySelector('main');
-      const extraNodes = Array.from(fetchedBody?.children || []).filter(node =>
-        node !== fetchedMain && !node.contains(fetchedMain) && !node.matches('script')
-      );
-      const contentHtml = fetchedMain ? fetchedMain.innerHTML : (fetchedBody?.innerHTML || '');
-      pageContent.innerHTML = contentHtml;
-      prepareLazyContent(pageContent);
-
-      extraNodes.forEach(node => {
-        document.body.appendChild(markInjectedNode(node.cloneNode(true)));
-      });
-
-      const fetchedScripts = Array.from(fetchedDocument.querySelectorAll('script')).filter(script => {
-        if (!script.src) return true;
-        const scriptUrl = new URL(script.src, window.location.href).href;
-        return !Array.from(document.scripts).some(existing => existing.src && new URL(existing.src, window.location.href).href === scriptUrl);
-      });
-      await executeFetchedScripts(fetchedScripts);
-
-      setTimeout(() => {
-        document.dispatchEvent(new Event('DOMContentLoaded'));
-      }, 0);
-    })
-    .catch(error => {
-      pageContent.innerHTML = `
-        <div class="alert alert-danger m-3">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          ${utils.escapeHtml(error.message || 'Không thể tải nội dung trang.')}
-        </div>
-      `;
-      console.error('loadContentIntoShell error:', error);
+  try {
+    const response = await fetch(url, {
+      headers: { 'X-Requested-With': 'fetch' },
+      signal: currentAbortController.signal,
     });
+
+    if (!response.ok) {
+      throw new Error(`Không tải được trang: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const fetchedDocument = new DOMParser().parseFromString(html, 'text/html');
+    const fetchedBody = fetchedDocument.body;
+
+    const fetchedMain = fetchedDocument.querySelector('main#page-content') || fetchedDocument.querySelector('main');
+    const extraNodes = Array.from(fetchedBody?.children || []).filter(node =>
+      node !== fetchedMain &&
+      !node.contains(fetchedMain) &&
+      !node.matches('script') &&
+      node.id !== 'sidebar-container' &&
+      node.id !== 'topbar-container' &&
+      node.id !== 'main-wrapper'
+    );
+
+    const contentHtml = fetchedMain ? fetchedMain.innerHTML : (fetchedBody?.innerHTML || '');
+    pageContent.innerHTML = contentHtml;
+    prepareLazyContent(pageContent);
+
+    // Chèn modals và các phần tử con phụ thuộc vào body
+    extraNodes.forEach(node => {
+      document.body.appendChild(markInjectedNode(node.cloneNode(true)));
+    });
+
+    // Đồng bộ URL và trạng thái sidebar
+    if (pushState) {
+      window.history.pushState({ url }, '', url);
+    }
+    updateActiveSidebarLink(url);
+
+    // Nạp và thực thi script của trang con (bỏ qua các core scripts đã có sẵn)
+    const fetchedScripts = Array.from(fetchedDocument.querySelectorAll('script')).filter(script => {
+      const rawSrc = script.getAttribute('src');
+      if (!rawSrc) return true;
+      if (isCoreScript(rawSrc)) return false;
+      const scriptUrl = new URL(rawSrc, targetBaseUrl).href;
+      return !Array.from(document.scripts).some(existing => existing.src && new URL(existing.src, window.location.href).href === scriptUrl);
+    });
+    await executeFetchedScripts(fetchedScripts);
+
+    // Khởi tạo trang con: Ưu tiên window.initPage, sau đó chạy các callback đã đăng ký
+    if (typeof window.initPage === 'function') {
+      try {
+        await window.initPage();
+      } catch (initErr) {
+        console.error('Lỗi khi chạy window.initPage:', initErr);
+      }
+    }
+    for (const initFn of pendingPageInits) {
+      try {
+        await initFn();
+      } catch (err) {
+        console.error('Lỗi khi chạy callback khởi tạo trang:', err);
+      }
+    }
+    pendingPageInits = [];
+
+    // Bắn sự kiện riêng cho trang con nếu cần lắng nghe
+    document.dispatchEvent(new CustomEvent('shell:content-loaded', { detail: { url } }));
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+    pageContent.innerHTML = `
+      <div class="alert alert-danger m-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        ${utils.escapeHtml(error.message || 'Không thể tải nội dung trang.')}
+      </div>
+    `;
+    console.error('loadContentIntoShell error:', error);
+  } finally {
+    isShellLoading = false;
+  }
 }
 
+/* Đăng ký sự kiện điều hướng Shell — Chỉ chạy DUY NHẤT 1 LẦN */
 function bindShellNavigation() {
+  if (isNavigationBound) return;
+  isNavigationBound = true;
+
   document.addEventListener('click', function (event) {
     const link = event.target.closest('a[href]');
     if (!link) return;
 
-    const href = link.getAttribute('href');
-    if (!href || href.startsWith('#') || href.startsWith('mailto:')) {
+    if (link.id === 'btn-logout' || link.hasAttribute('data-bs-toggle') || link.hasAttribute('data-bs-dismiss')) {
       return;
     }
 
-    const sameOrigin = new URL(href, window.location.origin).origin === window.location.origin;
-    if (!sameOrigin) {
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:')) {
+      return;
+    }
+
+    let targetUrl;
+    try {
+      targetUrl = new URL(href, window.location.origin);
+      if (targetUrl.origin !== window.location.origin) return;
+    } catch {
       return;
     }
 
     const isPageNavigation = href.endsWith('.html') || href.startsWith('/');
-    if (!isPageNavigation) {
+    if (!isPageNavigation) return;
+
+    const currentPath = window.location.pathname;
+    const targetPath = targetUrl.pathname;
+    if (targetPath === currentPath && targetUrl.search === window.location.search) {
+      event.preventDefault();
       return;
     }
 
-    const currentPage = window.location.pathname;
-    if (href === currentPage || href === '/' || currentPage.endsWith(href)) {
+    // Các trang cổng riêng biệt chạy độc lập ngoài shell
+    if (
+      targetPath.endsWith('index.html') ||
+      targetPath.endsWith('vendor-login.html') ||
+      targetPath.endsWith('buyer-portal.html') ||
+      targetPath.endsWith('supplier-portal.html')
+    ) {
       return;
     }
 
     event.preventDefault();
-    document.querySelectorAll('#sidebar a[href]').forEach(item => item.classList.remove('active'));
-    link.classList.add('active');
-    loadContentIntoShell(href);
+    loadContentIntoShell(href, true);
+  });
+
+  // Hỗ trợ nút Back / Forward trên trình duyệt
+  window.addEventListener('popstate', () => {
+    loadContentIntoShell(window.location.pathname + window.location.search, false);
   });
 }
 
@@ -291,4 +443,6 @@ document.addEventListener('DOMContentLoaded', () => {
   renderLayout();
   prepareLazyContent(document.getElementById('page-content'));
   bindShellNavigation();
+  updateActiveSidebarLink();
 });
+

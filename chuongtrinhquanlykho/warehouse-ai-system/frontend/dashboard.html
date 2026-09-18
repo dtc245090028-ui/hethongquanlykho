@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8"/>
@@ -155,7 +155,7 @@
   <script>
     /* ========= Dashboard — Tải dữ liệu tổng quan ========= */
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    async function initDashboardPage() {
       if (!document.getElementById('total-goods')) return;
       setPageTitle('Dashboard');
 
@@ -248,7 +248,12 @@
         document.getElementById('po-table').innerHTML =
           rows || '<tr><td colspan="3" class="text-center py-3 text-muted">Không có đơn đang xử lý</td></tr>';
       }
-    });
+    }
+    window.initPage = initDashboardPage;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initDashboardPage, { once: true });
+    }
   </script>
 </body>
 </html>

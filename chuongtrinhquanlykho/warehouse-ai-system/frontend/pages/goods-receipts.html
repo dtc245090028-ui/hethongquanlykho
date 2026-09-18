@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -390,11 +390,16 @@
     document.getElementById('date-to').addEventListener('change', () => loadReceipts(1));
     document.getElementById('supplier-filter').addEventListener('input', utils.debounce(() => loadReceipts(1), 400));
 
-    document.addEventListener('DOMContentLoaded', () => {
+    async function initGoodsReceiptsPage() {
       setPageTitle('Phiếu nhập kho');
       loadReceipts(1);
       openOfferAsReceipt();
-    });
+    }
+    window.initPage = initGoodsReceiptsPage;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initGoodsReceiptsPage, { once: true });
+    }
   </script>
 </body>
 </html>
