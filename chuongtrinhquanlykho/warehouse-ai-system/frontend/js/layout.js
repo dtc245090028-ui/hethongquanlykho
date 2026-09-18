@@ -23,6 +23,133 @@ function isActiveLink(href) {
   return current === href || current.endsWith(href);
 }
 
+function prepareLazyContent(root) {
+  if (!root) return;
+
+  root.querySelectorAll('img:not([loading]), iframe:not([loading])').forEach(media => {
+    media.loading = 'lazy';
+  });
+
+  Array.from(root.children).slice(1).forEach(section => {
+    section.classList.add('lazy-content');
+  });
+}
+
+function loadContentIntoShell(url) {
+  const pageContent = document.getElementById('page-content');
+  if (!pageContent) return Promise.resolve();
+
+  document.querySelectorAll('[data-shell-injected="true"]').forEach(node => node.remove());
+  document.querySelectorAll('script[data-shell-script="true"]').forEach(node => node.remove());
+
+  const markInjectedNode = (node) => {
+    node.setAttribute('data-shell-injected', 'true');
+    return node;
+  };
+
+  const executeFetchedScripts = async (scripts) => {
+    for (const script of scripts) {
+      if (script.src) {
+        const scriptUrl = new URL(script.src, window.location.href).href;
+        const alreadyLoaded = Array.from(document.scripts).some(existing => {
+          return existing.src && new URL(existing.src, window.location.href).href === scriptUrl;
+        });
+
+        if (alreadyLoaded) continue;
+
+        await new Promise((resolve, reject) => {
+          const newScript = document.createElement('script');
+          newScript.setAttribute('data-shell-script', 'true');
+          newScript.src = script.src;
+          newScript.async = false;
+          newScript.onload = () => resolve();
+          newScript.onerror = () => reject(new Error(`Không tải được script: ${script.src}`));
+          document.body.appendChild(newScript);
+        });
+      } else {
+        const newScript = document.createElement('script');
+        newScript.setAttribute('data-shell-script', 'true');
+        newScript.textContent = `(function() {\n${script.textContent}\n})();`;
+        document.body.appendChild(newScript);
+      }
+    }
+  };
+
+  return fetch(url, { headers: { 'X-Requested-With': 'fetch' } })
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error(`Không tải được trang: ${response.status}`);
+      }
+      const html = await response.text();
+      const fetchedDocument = new DOMParser().parseFromString(html, 'text/html');
+      const fetchedBody = fetchedDocument.body;
+
+      const fetchedMain = fetchedDocument.querySelector('main#page-content') || fetchedDocument.querySelector('main');
+      const extraNodes = Array.from(fetchedBody?.children || []).filter(node =>
+        node !== fetchedMain && !node.contains(fetchedMain) && !node.matches('script')
+      );
+      const contentHtml = fetchedMain ? fetchedMain.innerHTML : (fetchedBody?.innerHTML || '');
+      pageContent.innerHTML = contentHtml;
+      prepareLazyContent(pageContent);
+
+      extraNodes.forEach(node => {
+        document.body.appendChild(markInjectedNode(node.cloneNode(true)));
+      });
+
+      const fetchedScripts = Array.from(fetchedDocument.querySelectorAll('script')).filter(script => {
+        if (!script.src) return true;
+        const scriptUrl = new URL(script.src, window.location.href).href;
+        return !Array.from(document.scripts).some(existing => existing.src && new URL(existing.src, window.location.href).href === scriptUrl);
+      });
+      await executeFetchedScripts(fetchedScripts);
+
+      setTimeout(() => {
+        document.dispatchEvent(new Event('DOMContentLoaded'));
+      }, 0);
+    })
+    .catch(error => {
+      pageContent.innerHTML = `
+        <div class="alert alert-danger m-3">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          ${utils.escapeHtml(error.message || 'Không thể tải nội dung trang.')}
+        </div>
+      `;
+      console.error('loadContentIntoShell error:', error);
+    });
+}
+
+function bindShellNavigation() {
+  document.addEventListener('click', function (event) {
+    const link = event.target.closest('a[href]');
+    if (!link) return;
+
+    const href = link.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('mailto:')) {
+      return;
+    }
+
+    const sameOrigin = new URL(href, window.location.origin).origin === window.location.origin;
+    if (!sameOrigin) {
+      return;
+    }
+
+    const isPageNavigation = href.endsWith('.html') || href.startsWith('/');
+    if (!isPageNavigation) {
+      return;
+    }
+
+    const currentPage = window.location.pathname;
+    if (href === currentPage || href === '/' || currentPage.endsWith(href)) {
+      return;
+    }
+
+    event.preventDefault();
+    document.querySelectorAll('#sidebar a[href]').forEach(item => item.classList.remove('active'));
+    link.classList.add('active');
+    loadContentIntoShell(href);
+  });
+}
+
 /* Render toàn bộ layout (sidebar + topbar) */
 function renderLayout() {
   const role = auth.getRole();
@@ -162,4 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Kiểm tra đăng nhập trước khi render layout
   if (!auth.requireLogin()) return;
   renderLayout();
+  prepareLazyContent(document.getElementById('page-content'));
+  bindShellNavigation();
 });

@@ -156,6 +156,7 @@
     /* ========= Dashboard — Tải dữ liệu tổng quan ========= */
 
     document.addEventListener('DOMContentLoaded', async () => {
+      if (!document.getElementById('total-goods')) return;
       setPageTitle('Dashboard');
 
       /* Ngày hôm nay dạng ISO (chỉ lấy phần date) */

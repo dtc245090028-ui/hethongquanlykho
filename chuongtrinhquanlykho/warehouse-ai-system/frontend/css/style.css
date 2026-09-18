@@ -996,6 +996,13 @@ code, .font-mono {
   border-radius: 3px;
   display: inline-block;
 }
+
+/* Defer rendering of below-the-fold page sections until they approach the viewport. */
+.lazy-content {
+  content-visibility: auto;
+  contain-intrinsic-size: 360px;
+}
+
 @keyframes skeleton-loading {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
