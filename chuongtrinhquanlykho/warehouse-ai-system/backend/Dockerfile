@@ -19,10 +19,11 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # --- Cài đặt hệ thống (nếu cần) ---
-# gcc cần cho bcrypt; ca-certificates cho requests HTTPS
+# gcc cần cho bcrypt; ca-certificates cho requests HTTPS; sqlite3 CLI cho seed script
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     ca-certificates \
+    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Cài thư viện Python ---
@@ -47,5 +48,14 @@ ENV DATABASE_URL=sqlite:////data/warehouse.db \
 EXPOSE 5000
 
 # --- Lệnh khởi động ---
-# Dùng python -m app.main thay vì flask run để đảm bảo chạy được qua __main__
-CMD ["python", "-m", "app.main"]
+# Dùng Gunicorn làm WSGI server production thay vì Flask built-in server.
+# --workers 2  : Phù hợp SQLite (nhiều hơn dễ gây DB lock)
+# --timeout 120: AI endpoint (Gemini) có thể mất đến 60s → đặt 120s an toàn
+# --bind       : Lắng nghe mọi interface trong container
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:5000", \
+     "--workers", "2", \
+     "--timeout", "120", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "app.main:create_app()"]

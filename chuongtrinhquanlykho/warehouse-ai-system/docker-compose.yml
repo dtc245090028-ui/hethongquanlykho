@@ -81,9 +81,11 @@ services:
     ports:
       - "80:80"
 
-    # Frontend phụ thuộc backend — khởi động sau backend
+    # Frontend phụ thuộc backend — chờ cho đến khi backend HEALTHY
+    # (condition: service_healthy dùng healthcheck ở trên của backend)
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
     restart: unless-stopped
 
